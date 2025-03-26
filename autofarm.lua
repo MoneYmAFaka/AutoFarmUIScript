@@ -10,15 +10,15 @@ local reopenButton = Instance.new("TextButton")
 reopenButton.Size = UDim2.new(0, 50, 0, 50)
 reopenButton.Position = UDim2.new(0, 10, 0, 10)
 reopenButton.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-reopenButton.Text = "↺" -- Simple reopen symbol
+reopenButton.Text = "↺"
 reopenButton.TextColor3 = Color3.fromRGB(0, 200, 255)
 reopenButton.TextScaled = true
 reopenButton.Font = Enum.Font.GothamBold
-reopenButton.Visible = false -- Hidden until UI is closed
+reopenButton.Visible = false
 reopenButton.Parent = screenGui
 
 local reopenCorner = Instance.new("UICorner")
-reopenCorner.CornerRadius = UDim.new(0, 25) -- Circular button
+reopenCorner.CornerRadius = UDim.new(0, 25)
 reopenCorner.Parent = reopenButton
 
 -- Create Main Frame (the window)
@@ -279,67 +279,73 @@ local function createToggle(parent, name, position, callback)
     end)
 end
 
--- Function to Create a Rebirth Input UI
-local function createRebirthInput(parent, name, position, callback)
-    local rebirthFrame = Instance.new("Frame")
-    rebirthFrame.Size = UDim2.new(1, -20, 0, 50)
-    rebirthFrame.Position = position
-    rebirthFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-    rebirthFrame.BorderSizePixel = 0
-    rebirthFrame.ZIndex = 3
-    rebirthFrame.Parent = parent
+-- Function to Create a Toggle with Number Input (for Auto Rebirth)
+local function createToggleWithInput(parent, name, position, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(1, -20, 0, 50)
+    toggleFrame.Position = position
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.ZIndex = 3
+    toggleFrame.Parent = parent
 
-    local rebirthCorner = Instance.new("UICorner")
-    rebirthCorner.CornerRadius = UDim.new(0, 10)
-    rebirthCorner.Parent = rebirthFrame
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 10)
+    toggleCorner.Parent = toggleFrame
 
-    local rebirthLabel = Instance.new("TextLabel")
-    rebirthLabel.Size = UDim2.new(0.4, 0, 1, 0)
-    rebirthLabel.Position = UDim2.new(0, 15, 0, 0)
-    rebirthLabel.BackgroundTransparency = 1
-    rebirthLabel.Text = name
-    rebirthLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
-    rebirthLabel.TextScaled = true
-    rebirthLabel.TextXAlignment = Enum.TextXAlignment.Left
-    rebirthLabel.Font = Enum.Font.Gotham
-    rebirthLabel.ZIndex = 4
-    rebirthLabel.Parent = rebirthFrame
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(0.4, 0, 1, 0)
+    toggleLabel.Position = UDim2.new(0, 15, 0, 0)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = name
+    toggleLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    toggleLabel.TextScaled = true
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Font = Enum.Font.Gotham
+    toggleLabel.ZIndex = 4
+    toggleLabel.Parent = toggleFrame
 
-    local rebirthInput = Instance.new("TextBox")
-    rebirthInput.Size = UDim2.new(0, 70, 0, 35)
-    rebirthInput.Position = UDim2.new(0.5, -10, 0.5, -17.5)
-    rebirthInput.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-    rebirthInput.Text = "1"
-    rebirthInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    rebirthInput.TextScaled = true
-    rebirthInput.Font = Enum.Font.Gotham
-    rebirthInput.ZIndex = 4
-    rebirthInput.Parent = rebirthFrame
+    local numberInput = Instance.new("TextBox")
+    numberInput.Size = UDim2.new(0, 70, 0, 35)
+    numberInput.Position = UDim2.new(0.5, -10, 0.5, -17.5)
+    numberInput.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    numberInput.Text = "1"
+    numberInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    numberInput.TextScaled = true
+    numberInput.Font = Enum.Font.Gotham
+    numberInput.ZIndex = 4
+    numberInput.Parent = toggleFrame
 
     local inputCorner = Instance.new("UICorner")
     inputCorner.CornerRadius = UDim.new(0, 10)
-    inputCorner.Parent = rebirthInput
+    inputCorner.Parent = numberInput
 
-    local rebirthButton = Instance.new("TextButton")
-    rebirthButton.Size = UDim2.new(0, 70, 0, 35)
-    rebirthButton.Position = UDim2.new(1, -80, 0.5, -17.5)
-    rebirthButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-    rebirthButton.Text = "Rebirth"
-    rebirthButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    rebirthButton.TextScaled = true
-    rebirthButton.Font = Enum.Font.GothamBold
-    rebirthButton.ZIndex = 4
-    rebirthButton.Parent = rebirthFrame
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 70, 0, 35)
+    toggleButton.Position = UDim2.new(1, -80, 0.5, -17.5)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    toggleButton.Text = "OFF"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.TextScaled = true
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.ZIndex = 4
+    toggleButton.Parent = toggleFrame
 
     local buttonCorner = Instance.new("UICorner")
     buttonCorner.CornerRadius = UDim.new(0, 10)
-    buttonCorner.Parent = rebirthButton
+    buttonCorner.Parent = toggleButton
 
-    rebirthButton.MouseButton1Click:Connect(function()
-        local count = tonumber(rebirthInput.Text)
-        if count and count > 0 then
-            callback(count)
+    local isOn = false
+    toggleButton.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        if isOn then
+            toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            toggleButton.Text = "ON"
+        else
+            toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            toggleButton.Text = "OFF"
         end
+        callback(isOn, tonumber(numberInput.Text) or 1)
     end)
 end
 
@@ -495,7 +501,7 @@ createToggle(mainTabContent, "Auto Ascend", UDim2.new(0, 10, 0, 70), function(st
     end
 end)
 
-createToggle(mainTabContent, "Auto Rebirth Toggle", UDim2.new(0, 10, 0, 130), function(state)
+createToggleWithInput(mainTabContent, "Auto Rebirth", UDim2.new(0, 10, 0, 130), function(state, count)
     autoRebirth = state
     if autoRebirth then
         spawn(function()
@@ -504,7 +510,6 @@ createToggle(mainTabContent, "Auto Rebirth Toggle", UDim2.new(0, 10, 0, 130), fu
                               game:GetService("ReplicatedStorage"):FindFirstChild("RebirthEvent") or
                               (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Rebirth"))
                 if event then
-                    local count = tonumber(mainTabContent:FindFirstChild("Auto Rebirth Manual").TextBox.Text) or 1
                     local args = { [1] = count, [2] = "bROaINTGueSSIngAllThis1!!frfrfrfrfrfr" }
                     pcall(function()
                         event:FireServer(unpack(args))
@@ -515,19 +520,7 @@ createToggle(mainTabContent, "Auto Rebirth Toggle", UDim2.new(0, 10, 0, 130), fu
     end
 end)
 
-createRebirthInput(mainTabContent, "Auto Rebirth Manual", UDim2.new(0, 10, 0, 190), function(count)
-    local event = game:GetService("ReplicatedStorage"):FindFirstChild("Rebirth") or
-                  game:GetService("ReplicatedStorage"):FindFirstChild("RebirthEvent") or
-                  (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Rebirth"))
-    if event then
-        local args = { [1] = count, [2] = "bROaINTGueSSIngAllThis1!!frfrfrfrfrfr" }
-        pcall(function()
-            event:FireServer(unpack(args))
-        end)
-    end
-end)
-
-createHatchInput(mainTabContent, "Auto Hatch", UDim2.new(0, 10, 0, 250), function(state)
+createHatchInput(mainTabContent, "Auto Hatch", UDim2.new(0, 10, 0, 190), function(state)
     autoHatch = state
     if autoHatch then
         spawn(function()
@@ -591,7 +584,7 @@ createToggle(upgradesTabContent, "Auto Upgrade", UDim2.new(0, 10, 0, 10), functi
 end)
 
 -- Settings Tab: Keybind for closing UI
-local closeKey = "E" -- Default key
+local closeKey = "E"
 createKeybindInput(settingsTabContent, "Close UI Key", UDim2.new(0, 10, 0, 10), closeKey, function(newKey)
     closeKey = newKey
 end)
