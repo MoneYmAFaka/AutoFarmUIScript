@@ -222,7 +222,16 @@ settingsTabButton.MouseButton1Click:Connect(function()
 end)
 
 -- Toggles State
-local autoClick, autoAscend, autoUpgrade, autoRebirth, autoCraft = false, false, false, false, false
+local autoClick, autoAscend, autoUpgrade, autoHatch, autoRebirth, autoCraft = false, false, false, false, false, false
+
+-- List of Eggs (Updated with the correct names from Workspace.Scripted.EggHolder)
+local eggList = {
+    "ANIMAL RUNE", "BLOOMING RUNE", "CAMPFIRE RUNE", "CARNIVAL", "CLOUD RUNE", "COLLECTORS RUNE",
+    "CRYSTAL RUNE", "DEMETER RUNE", "DEVELOPER RUNE", "DRYNESS RUNE", "ETHEREAL RUNE", "FLAME RUNE",
+    "FLOWER RUNE", "FOG RUNE", "FRUIT RUNE", "GRINDER RUNE", "HEAVENLY RUNE", "IGLOO RUNE",
+    "INFERNALIX RUNE", "LUNAR RUNE", "NATURE RUNE", "OP RELEASE RUNE", "ORE RUNE", "RARITY RUNE",
+    "SAHARA RUNE", "SNOW RUNE"
+}
 
 -- Function to Create a Toggle
 local function createToggle(parent, name, position, callback)
@@ -346,6 +355,188 @@ local function createToggleWithInput(parent, name, position, callback)
             toggleButton.Text = "OFF"
         end
         callback(isOn, tonumber(numberInput.Text) or 1)
+    end)
+end
+
+-- Function to Create Hatch Input UI with Dropdown
+local function createHatchInputWithDropdown(parent, name, position, callback)
+    local hatchFrame = Instance.new("Frame")
+    hatchFrame.Size = UDim2.new(1, -20, 0, 50)
+    hatchFrame.Position = position
+    hatchFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    hatchFrame.BorderSizePixel = 0
+    hatchFrame.ZIndex = 3
+    hatchFrame.Parent = parent
+
+    local hatchCorner = Instance.new("UICorner")
+    hatchCorner.CornerRadius = UDim.new(0, 10)
+    hatchCorner.Parent = hatchFrame
+
+    local hatchLabel = Instance.new("TextLabel")
+    hatchLabel.Size = UDim2.new(0.3, 0, 1, 0)
+    hatchLabel.Position = UDim2.new(0, 15, 0, 0)
+    hatchLabel.BackgroundTransparency = 1
+    hatchLabel.Text = name
+    hatchLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    hatchLabel.TextScaled = true
+    hatchLabel.TextXAlignment = Enum.TextXAlignment.Left
+    hatchLabel.Font = Enum.Font.Gotham
+    hatchLabel.ZIndex = 4
+    hatchLabel.Parent = hatchFrame
+
+    -- Dropdown Button
+    local dropdownButton = Instance.new("TextButton")
+    dropdownButton.Size = UDim2.new(0, 150, 0, 35)
+    dropdownButton.Position = UDim2.new(0.3, 10, 0.5, -17.5)
+    dropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    dropdownButton.Text = "Select Egg"
+    dropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dropdownButton.TextScaled = true
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.ZIndex = 4
+    dropdownButton.Parent = hatchFrame
+
+    local dropdownCorner = Instance.new("UICorner")
+    dropdownCorner.CornerRadius = UDim.new(0, 10)
+    dropdownCorner.Parent = dropdownButton
+
+    -- Dropdown List Frame (Hidden by default)
+    local dropdownList = Instance.new("Frame")
+    dropdownList.Size = UDim2.new(0, 150, 0, 150)
+    dropdownList.Position = UDim2.new(0.3, 10, 0.5, 17.5)
+    dropdownList.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    dropdownList.BorderSizePixel = 0
+    dropdownList.ZIndex = 5
+    dropdownList.Visible = false
+    dropdownList.Parent = hatchFrame
+
+    local listCorner = Instance.new("UICorner")
+    listCorner.CornerRadius = UDim.new(0, 10)
+    listCorner.Parent = dropdownList
+
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollingFrame.BackgroundTransparency = 1
+    scrollingFrame.ScrollBarThickness = 5
+    scrollingFrame.ZIndex = 6
+    scrollingFrame.Parent = dropdownList
+
+    local uiListLayout = Instance.new("UIListLayout")
+    uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    uiListLayout.Parent = scrollingFrame
+
+    -- Search Bar
+    local searchBar = Instance.new("TextBox")
+    searchBar.Size = UDim2.new(0, 150, 0, 25)
+    searchBar.Position = UDim2.new(0.3, 10, 0.5, -47.5)
+    searchBar.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    searchBar.Text = "Search..."
+    searchBar.TextColor3 = Color3.fromRGB(150, 150, 150)
+    searchBar.TextScaled = true
+    searchBar.Font = Enum.Font.Gotham
+    searchBar.ZIndex = 4
+    searchBar.Parent = hatchFrame
+
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 10)
+    searchCorner.Parent = searchBar
+
+    local hatchInput = Instance.new("TextBox")
+    hatchInput.Size = UDim2.new(0, 70, 0, 35)
+    hatchInput.Position = UDim2.new(0.65, 0, 0.5, -17.5)
+    hatchInput.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    hatchInput.Text = "1"
+    hatchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    hatchInput.TextScaled = true
+    hatchInput.Font = Enum.Font.Gotham
+    hatchInput.ZIndex = 4
+    hatchInput.Parent = hatchFrame
+
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 10)
+    inputCorner.Parent = hatchInput
+
+    local hatchButton = Instance.new("TextButton")
+    hatchButton.Size = UDim2.new(0, 70, 0, 35)
+    hatchButton.Position = UDim2.new(1, -80, 0.5, -17.5)
+    hatchButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    hatchButton.Text = "OFF"
+    hatchButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    hatchButton.TextScaled = true
+    hatchButton.Font = Enum.Font.GothamBold
+    hatchButton.ZIndex = 4
+    hatchButton.Parent = hatchFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = hatchButton
+
+    -- Populate Dropdown
+    local function populateDropdown(filter)
+        for _, child in pairs(scrollingFrame:GetChildren()) do
+            if child:IsA("TextButton") then
+                child:Destroy()
+            end
+        end
+
+        for _, egg in pairs(eggList) do
+            if not filter or string.find(string.lower(egg), string.lower(filter)) then
+                local eggButton = Instance.new("TextButton")
+                eggButton.Size = UDim2.new(1, 0, 0, 30)
+                eggButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+                eggButton.Text = egg
+                eggButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+                eggButton.TextScaled = true
+                eggButton.Font = Enum.Font.Gotham
+                eggButton.ZIndex = 6
+                eggButton.Parent = scrollingFrame
+
+                eggButton.MouseButton1Click:Connect(function()
+                    dropdownButton.Text = egg
+                    dropdownList.Visible = false
+                end)
+            end
+        end
+    end
+
+    populateDropdown()
+
+    -- Search Bar Logic
+    searchBar.FocusLost:Connect(function()
+        local filter = searchBar.Text == "Search..." and "" or searchBar.Text
+        populateDropdown(filter)
+    end)
+
+    searchBar.Focused:Connect(function()
+        if searchBar.Text == "Search..." then
+            searchBar.Text = ""
+            searchBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+        end
+    end)
+
+    searchBar.FocusLost:Connect(function()
+        if searchBar.Text == "" then
+            searchBar.Text = "Search..."
+            searchBar.TextColor3 = Color3.fromRGB(150, 150, 150)
+        end
+    end)
+
+    -- Dropdown Toggle
+    dropdownButton.MouseButton1Click:Connect(function()
+        dropdownList.Visible = not dropdownList.Visible
+    end)
+
+    local isOn = false
+    hatchButton.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        if isOn then
+            hatchButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            hatchButton.Text = "ON"
+        else
+            hatchButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            hatchButton.Text = "OFF"
+        end
+        callback(isOn, dropdownButton.Text, hatchInput.Text)
     end)
 end
 
@@ -477,7 +668,37 @@ createToggleWithInput(mainTabContent, "Auto Rebirth", UDim2.new(0, 10, 0, 130), 
     end
 end)
 
-createToggle(mainTabContent, "Auto Craft", UDim2.new(0, 10, 0, 190), function(state)
+createHatchInputWithDropdown(mainTabContent, "Auto Hatch", UDim2.new(0, 10, 0, 190), function(state, selectedEgg, hatchCountText)
+    autoHatch = state
+    if autoHatch then
+        spawn(function()
+            while autoHatch and task.wait(0.5) do
+                if selectedEgg == "Select Egg" then
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Error",
+                        Text = "Please select an egg to hatch!",
+                        Duration = 2
+                    })
+                    return
+                end
+                local hatchCount = tonumber(hatchCountText) or 1
+                local hatchType = hatchCount > 1 and "Triple" or "Single"
+                local args = { [1] = selectedEgg, [2] = hatchType }
+                pcall(function()
+                    -- Invoke the Hatch event
+                    game:GetService("ReplicatedStorage").Functions.Hatch:InvokeServer(unpack(args))
+                    game.StarterGui:SetCore("SendNotification", {
+                        Title = "Hatching",
+                        Text = "Hatching " .. selectedEgg .. " (" .. hatchType .. ")",
+                        Duration = 2
+                    })
+                end)
+            end
+        end)
+    end
+end)
+
+createToggle(mainTabContent, "Auto Craft", UDim2.new(0, 10, 0, 250), function(state)
     autoCraft = state
     if autoCraft then
         spawn(function()
@@ -567,67 +788,30 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
     end
 end)
 
--- Attempt to Disable Hatch Animation (Updated Search Approach)
-local function disableHatchAnimation()
-    -- Search for ScreenGui in StarterGui
-    for _, gui in pairs(game:GetService("StarterGui"):GetChildren()) do
-        if gui:IsA("ScreenGui") and (string.find(string.lower(gui.Name), "hatch") or 
-                                     string.find(string.lower(gui.Name), "egg") or 
-                                     string.find(string.lower(gui.Name), "pet")) then
-            gui.Enabled = false
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Animation Disabled",
-                Text = "Disabled ScreenGui: " .. gui.Name,
-                Duration = 3
-            })
-        end
-    end
-
-    -- Search for scripts in StarterPlayerScripts
-    for _, script in pairs(game:GetService("StarterPlayer").StarterPlayerScripts:GetChildren()) do
-        if script:IsA("LocalScript") and (string.find(string.lower(script.Name), "hatch") or 
-                                          string.find(string.lower(script.Name), "egg") or 
-                                          string.find(string.lower(script.Name), "pet")) then
-            script.Disabled = true
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Animation Disabled",
-                Text = "Disabled Script: " .. script.Name,
-                Duration = 3
-            })
-        end
-    end
-
-    -- Search for RemoteEvents in ReplicatedStorage
-    for _, event in pairs(game:GetService("ReplicatedStorage"):GetChildren()) do
-        if event:IsA("RemoteEvent") and (string.find(string.lower(event.Name), "hatch") or 
-                                         string.find(string.lower(event.Name), "egg") or 
-                                         string.find(string.lower(event.Name), "pet")) then
-            event.OnClientEvent:Connect(function() end) -- Override to do nothing
-            game.StarterGui:SetCore("SendNotification", {
-                Title = "Animation Disabled",
-                Text = "Overridden RemoteEvent: " .. event.Name,
-                Duration = 3
-            })
-        end
-    end
-
-    -- Additional check for a folder like "Events" in ReplicatedStorage
-    local eventsFolder = game:GetService("ReplicatedStorage"):FindFirstChild("Events")
-    if eventsFolder then
-        for _, event in pairs(eventsFolder:GetChildren()) do
-            if event:IsA("RemoteEvent") and (string.find(string.lower(event.Name), "hatch") or 
-                                             string.find(string.lower(event.Name), "egg") or 
-                                             string.find(string.lower(event.Name), "pet")) then
-                event.OnClientEvent:Connect(function() end) -- Override to do nothing
-                game.StarterGui:SetCore("SendNotification", {
-                    Title = "Animation Disabled",
-                    Text = "Overridden RemoteEvent in Events: " .. event.Name,
-                    Duration = 3
-                })
-            end
-        end
-    end
+-- Disable the Hatch Animation by Disabling HatchDisplay
+local hatchDisplay = game:GetService("StarterGui"):FindFirstChild("HatchDisplay")
+if hatchDisplay then
+    hatchDisplay.Enabled = false
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Animation Disabled",
+        Text = "HatchDisplay has been disabled.",
+        Duration = 3
+    })
+else
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Error",
+        Text = "HatchDisplay not found in StarterGui.",
+        Duration = 3
+    })
 end
 
--- Run the disable function
-disableHatchAnimation()
+-- Override ShareHatches to prevent the animation
+local shareHatches = game:GetService("ReplicatedStorage").Events.ShareHatches
+shareHatches.OnClientEvent:Connect(function()
+    -- Do nothing, effectively disabling the animation
+    game.StarterGui:SetCore("SendNotification", {
+        Title = "Animation Blocked",
+        Text = "ShareHatches event has been overridden.",
+        Duration = 3
+    })
+end)
