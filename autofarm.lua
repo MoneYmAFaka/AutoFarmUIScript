@@ -455,8 +455,8 @@ createToggle(upgradesTabContent, "Auto Upgrade", UDim2.new(0, 10, 0, 10), functi
     autoUpgrade = state
     if autoUpgrade then
         spawn(function()
-            local upgrades = {"ClickMulti", "GemChance", "RebirthButtons", "WalkSpeed", "MoreStorage", 
-                             "LuckMulti", "CriticalChance", "HatchSpeed", "PetEquip", "GemMulti"}
+            local upgrades = {"HatchSpeed", "ClickMulti", "GemChance", "RebirthButtons", "WalkSpeed", "MoreStorage", 
+                             "LuckMulti", "CriticalChance", "PetEquip", "GemMulti"} -- Prioritized HatchSpeed
             while autoUpgrade do
                 for _, upgrade in ipairs(upgrades) do
                     if not autoUpgrade then break end
@@ -493,4 +493,44 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
             reopenButton.Visible = false
         end
     end
+end)
+
+-- Continuously Disable HatchDisplay to Skip Egg-Opening Animation
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+
+-- Initial disable attempt
+local success, hatchDisplay = pcall(function()
+    return StarterGui:FindFirstChild("HatchDisplay")
+end)
+
+if success and hatchDisplay then
+    hatchDisplay.Enabled = false
+    StarterGui:SetCore("SendNotification", {
+        Title = "Hatch Animation Disabled",
+        Text = "Egg-opening animation has been disabled. Hatching should be faster!",
+        Duration = 3
+    })
+else
+    StarterGui:SetCore("SendNotification", {
+        Title = "Error",
+        Text = "Could not find HatchDisplay in StarterGui.",
+        Duration = 5
+    })
+end
+
+-- Continuously disable HatchDisplay every frame to prevent re-enabling
+RunService.RenderStepped:Connect(function()
+    local success, hatchDisplay = pcall(function()
+        return StarterGui:FindFirstChild("HatchDisplay")
+    end)
+    if success and hatchDisplay then
+        hatchDisplay.Enabled = false
+    end
+end)
+
+-- Override ShareHatches Event to Prevent Animation Triggers
+local shareHatches = game:GetService("ReplicatedStorage").Events.ShareHatches
+shareHatches.OnClientEvent:Connect(function()
+    -- Do nothing to prevent the animation from being triggered
 end)
