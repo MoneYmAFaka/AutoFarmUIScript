@@ -4,7 +4,6 @@ screenGui.Name = "AutoFarmUI"
 screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 screenGui.ResetOnSpawn = false
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-print("ScreenGui created")
 
 -- Create Main Frame (the window)
 local mainFrame = Instance.new("Frame")
@@ -14,7 +13,6 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 1
 mainFrame.Parent = screenGui
-print("Main Frame created")
 
 -- Add UICorner for rounded edges
 local uiCorner = Instance.new("UICorner")
@@ -72,7 +70,6 @@ titleBar.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 titleBar.BorderSizePixel = 0
 titleBar.ZIndex = 2
 titleBar.Parent = mainFrame
-print("Title Bar created")
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -40, 1, 0)
@@ -84,7 +81,6 @@ titleLabel.TextScaled = true
 titleLabel.Font = Enum.Font.SourceSansBold
 titleLabel.ZIndex = 3
 titleLabel.Parent = titleBar
-print("Title Label created")
 
 -- Create Close Button
 local closeButton = Instance.new("TextButton")
@@ -97,7 +93,6 @@ closeButton.TextScaled = true
 closeButton.Font = Enum.Font.SourceSansBold
 closeButton.ZIndex = 3
 closeButton.Parent = titleBar
-print("Close Button created")
 
 local closeCorner = Instance.new("UICorner")
 closeCorner.CornerRadius = UDim.new(0, 5)
@@ -115,7 +110,6 @@ tabFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 tabFrame.BorderSizePixel = 0
 tabFrame.ZIndex = 2
 tabFrame.Parent = mainFrame
-print("Tab Frame created")
 
 -- Main Tab Button
 local mainTabButton = Instance.new("TextButton")
@@ -128,7 +122,6 @@ mainTabButton.TextScaled = true
 mainTabButton.Font = Enum.Font.SourceSans
 mainTabButton.ZIndex = 3
 mainTabButton.Parent = tabFrame
-print("Main Tab Button created")
 
 -- Upgrades Tab Button
 local upgradesTabButton = Instance.new("TextButton")
@@ -141,7 +134,6 @@ upgradesTabButton.TextScaled = true
 upgradesTabButton.Font = Enum.Font.SourceSans
 upgradesTabButton.ZIndex = 3
 upgradesTabButton.Parent = tabFrame
-print("Upgrades Tab Button created")
 
 -- Create Tab Content Frames
 local mainTabContent = Instance.new("Frame")
@@ -151,7 +143,6 @@ mainTabContent.BackgroundTransparency = 1
 mainTabContent.ZIndex = 2
 mainTabContent.Visible = true
 mainTabContent.Parent = mainFrame
-print("Main Tab Content created")
 
 local upgradesTabContent = Instance.new("Frame")
 upgradesTabContent.Size = UDim2.new(1, 0, 1, -60)
@@ -160,7 +151,6 @@ upgradesTabContent.BackgroundTransparency = 1
 upgradesTabContent.ZIndex = 2
 upgradesTabContent.Visible = false
 upgradesTabContent.Parent = mainFrame
-print("Upgrades Tab Content created")
 
 -- Tab Switching Logic
 mainTabButton.MouseButton1Click:Connect(function()
@@ -178,7 +168,7 @@ upgradesTabButton.MouseButton1Click:Connect(function()
 end)
 
 -- Toggles State
-local autoClick, autoAscend, autoRebirth, autoUpgrade = false, false, false, false
+local autoClick, autoAscend, autoUpgrade = false, false, false
 
 -- Function to Create a Toggle
 local function createToggle(parent, name, position, callback)
@@ -189,7 +179,6 @@ local function createToggle(parent, name, position, callback)
     toggleFrame.BorderSizePixel = 0
     toggleFrame.ZIndex = 3
     toggleFrame.Parent = parent
-    print("Toggle Frame created for: " .. name)
 
     local toggleCorner = Instance.new("UICorner")
     toggleCorner.CornerRadius = UDim.new(0, 5)
@@ -206,7 +195,6 @@ local function createToggle(parent, name, position, callback)
     toggleLabel.Font = Enum.Font.SourceSans
     toggleLabel.ZIndex = 4
     toggleLabel.Parent = toggleFrame
-    print("Toggle Label created for: " .. name)
 
     local toggleButton = Instance.new("TextButton")
     toggleButton.Size = UDim2.new(0, 60, 0, 30)
@@ -218,7 +206,6 @@ local function createToggle(parent, name, position, callback)
     toggleButton.Font = Enum.Font.SourceSans
     toggleButton.ZIndex = 4
     toggleButton.Parent = toggleFrame
-    print("Toggle Button created for: " .. name)
 
     local buttonCorner = Instance.new("UICorner")
     buttonCorner.CornerRadius = UDim.new(0, 5)
@@ -238,21 +225,83 @@ local function createToggle(parent, name, position, callback)
     end)
 end
 
+-- Function to Create a Rebirth Input UI
+local function createRebirthInput(parent, name, position, callback)
+    local rebirthFrame = Instance.new("Frame")
+    rebirthFrame.Size = UDim2.new(1, -20, 0, 40)
+    rebirthFrame.Position = position
+    rebirthFrame.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    rebirthFrame.BorderSizePixel = 0
+    rebirthFrame.ZIndex = 3
+    rebirthFrame.Parent = parent
+
+    local rebirthCorner = Instance.new("UICorner")
+    rebirthCorner.CornerRadius = UDim.new(0, 5)
+    rebirthCorner.Parent = rebirthFrame
+
+    local rebirthLabel = Instance.new("TextLabel")
+    rebirthLabel.Size = UDim2.new(0.4, 0, 1, 0)
+    rebirthLabel.Position = UDim2.new(0, 10, 0, 0)
+    rebirthLabel.BackgroundTransparency = 1
+    rebirthLabel.Text = name
+    rebirthLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rebirthLabel.TextScaled = true
+    rebirthLabel.TextXAlignment = Enum.TextXAlignment.Left
+    rebirthLabel.Font = Enum.Font.SourceSans
+    rebirthLabel.ZIndex = 4
+    rebirthLabel.Parent = rebirthFrame
+
+    local rebirthInput = Instance.new("TextBox")
+    rebirthInput.Size = UDim2.new(0, 60, 0, 30)
+    rebirthInput.Position = UDim2.new(0.5, 0, 0.5, -15)
+    rebirthInput.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    rebirthInput.Text = "1"
+    rebirthInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rebirthInput.TextScaled = true
+    rebirthInput.Font = Enum.Font.SourceSans
+    rebirthInput.ZIndex = 4
+    rebirthInput.Parent = rebirthFrame
+
+    local inputCorner = Instance.new("UICorner")
+    inputCorner.CornerRadius = UDim.new(0, 5)
+    inputCorner.Parent = rebirthInput
+
+    local rebirthButton = Instance.new("TextButton")
+    rebirthButton.Size = UDim2.new(0, 60, 0, 30)
+    rebirthButton.Position = UDim2.new(1, -70, 0.5, -15)
+    rebirthButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+    rebirthButton.Text = "Rebirth"
+    rebirthButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    rebirthButton.TextScaled = true
+    rebirthButton.Font = Enum.Font.SourceSans
+    rebirthButton.ZIndex = 4
+    rebirthButton.Parent = rebirthFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 5)
+    buttonCorner.Parent = rebirthButton
+
+    rebirthButton.MouseButton1Click:Connect(function()
+        local count = tonumber(rebirthInput.Text)
+        if count and count > 0 then
+            callback(count)
+        end
+    end)
+end
+
 -- Create Toggles in Main Tab
 createToggle(mainTabContent, "Auto Click", UDim2.new(0, 10, 0, 10), function(state)
     autoClick = state
     if autoClick then
         spawn(function()
             while autoClick and task.wait() do
-                -- Try different possible event names for clicking
                 local event = game:GetService("ReplicatedStorage"):FindFirstChild("Click3") or
                               game:GetService("ReplicatedStorage"):FindFirstChild("ClickEvent") or
                               (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Click"))
                 if event then
-                    event:FireServer()
-                    print("Click event fired successfully")
-                else
-                    warn("Click event not found. Available in ReplicatedStorage: " .. table.concat({game:GetService("ReplicatedStorage"):GetChildren()}, ", "))
+                    pcall(function()
+                        event:FireServer()
+                    end)
                 end
             end
         end)
@@ -264,39 +313,31 @@ createToggle(mainTabContent, "Auto Ascend", UDim2.new(0, 10, 0, 60), function(st
     if autoAscend then
         spawn(function()
             while autoAscend and task.wait(1) do
-                -- Try different possible function names for ascending/mastery
                 local func = game:GetService("ReplicatedStorage"):FindFirstChild("IncreaseMastery") or
                              (game:GetService("ReplicatedStorage"):FindFirstChild("Functions") and game:GetService("ReplicatedStorage").Functions:FindFirstChild("IncreaseMastery"))
                 if func then
-                    func:InvokeServer()
-                    print("IncreaseMastery function invoked successfully")
-                else
-                    warn("IncreaseMastery function not found. Available in ReplicatedStorage: " .. table.concat({game:GetService("ReplicatedStorage"):GetChildren()}, ", "))
+                    pcall(function()
+                        func:InvokeServer()
+                    end)
                 end
             end
         end)
     end
 end)
 
-createToggle(mainTabContent, "Auto Rebirth", UDim2.new(0, 10, 0, 110), function(state)
-    autoRebirth = state
-    if autoRebirth then
-        spawn(function()
-            while autoRebirth and task.wait(2) do
-                -- Try different possible event names for rebirth
-                local event = game:GetService("ReplicatedStorage"):FindFirstChild("Rebirth") or
-                              game:GetService("ReplicatedStorage"):FindFirstChild("RebirthEvent") or
-                              (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Rebirth"))
-                if event then
-                    local args = { [1] = 1, [2] = "bROaINTGueSSIngAllThis1!!frfrfrfrfrfr" }
-                    event:FireServer(unpack(args))
-                    print("Rebirth event fired successfully")
-                else
-                    warn("Rebirth event not found. Available in ReplicatedStorage: " .. table.concat({game:GetService("ReplicatedStorage"):GetChildren()}, ", "))
-                end
-            end
-        end)
-    end
+-- Create Rebirth Input in Main Tab
+createRebirthInput(mainTabContent, "Auto Rebirth", UDim2.new(0, 10, 0, 110), function(count)
+    spawn(function()
+        local event = game:GetService("ReplicatedStorage"):FindFirstChild("Rebirth") or
+                      game:GetService("ReplicatedStorage"):FindFirstChild("RebirthEvent") or
+                      (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Rebirth"))
+        if event then
+            local args = { [1] = count, [2] = "bROaINTGueSSIngAllThis1!!frfrfrfrfrfr" }
+            pcall(function()
+                event:FireServer(unpack(args))
+            end)
+        end
+    end)
 end)
 
 -- Create Toggle in Upgrades Tab
@@ -309,15 +350,13 @@ createToggle(upgradesTabContent, "Auto Upgrade", UDim2.new(0, 10, 0, 10), functi
             while autoUpgrade do
                 for _, upgrade in ipairs(upgrades) do
                     if not autoUpgrade then break end
-                    -- Try different possible function names for upgrades
                     local func = game:GetService("ReplicatedStorage"):FindFirstChild("PurchaseUpgrade") or
                                  (game:GetService("ReplicatedStorage"):FindFirstChild("Functions") and game:GetService("ReplicatedStorage").Functions:FindFirstChild("PurchaseUpgrade"))
                     if func then
                         local args = { [1] = "Spawn", [2] = upgrade }
-                        func:InvokeServer(unpack(args))
-                        print("PurchaseUpgrade function invoked successfully for: " .. upgrade)
-                    else
-                        warn("PurchaseUpgrade function not found. Available in ReplicatedStorage: " .. table.concat({game:GetService("ReplicatedStorage"):GetChildren()}, ", "))
+                        pcall(function()
+                            func:InvokeServer(unpack(args))
+                        end)
                     end
                     task.wait(0.5)
                 end
@@ -325,5 +364,3 @@ createToggle(upgradesTabContent, "Auto Upgrade", UDim2.new(0, 10, 0, 10), functi
         end)
     end
 end)
-
-print("Custom UI Script Loaded Successfully")
