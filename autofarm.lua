@@ -21,28 +21,25 @@ local reopenCorner = Instance.new("UICorner")
 reopenCorner.CornerRadius = UDim.new(0, 25)
 reopenCorner.Parent = reopenButton
 
--- Create Main Frame (the window) - Expanded width to 450
+-- Create Main Frame (the window)
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 450, 0, 450) -- Increased width from 350 to 450
-mainFrame.Position = UDim2.new(0.5, -225, 0.5, -225) -- Adjusted position to center
+mainFrame.Size = UDim2.new(0, 450, 0, 450)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -225)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 mainFrame.BorderSizePixel = 0
 mainFrame.ZIndex = 1
 mainFrame.Parent = screenGui
 
--- Add UICorner for rounded edges
 local uiCorner = Instance.new("UICorner")
 uiCorner.CornerRadius = UDim.new(0, 15)
 uiCorner.Parent = mainFrame
 
--- Add UIStroke for a glowing border
 local uiStroke = Instance.new("UIStroke")
 uiStroke.Color = Color3.fromRGB(0, 200, 255)
 uiStroke.Thickness = 2
 uiStroke.Transparency = 0.3
 uiStroke.Parent = mainFrame
 
--- Add UIGradient for a sleek effect
 local uiGradient = Instance.new("UIGradient")
 uiGradient.Color = ColorSequence.new{
     ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 25, 30)),
@@ -133,7 +130,6 @@ tabFrame.BorderSizePixel = 0
 tabFrame.ZIndex = 2
 tabFrame.Parent = mainFrame
 
--- Main Tab Button
 local mainTabButton = Instance.new("TextButton")
 mainTabButton.Size = UDim2.new(0.33, 0, 1, 0)
 mainTabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -144,7 +140,6 @@ mainTabButton.Font = Enum.Font.Gotham
 mainTabButton.ZIndex = 3
 mainTabButton.Parent = tabFrame
 
--- Upgrades Tab Button
 local upgradesTabButton = Instance.new("TextButton")
 upgradesTabButton.Size = UDim2.new(0.33, 0, 1, 0)
 upgradesTabButton.Position = UDim2.new(0.33, 0, 0, 0)
@@ -156,7 +151,6 @@ upgradesTabButton.Font = Enum.Font.Gotham
 upgradesTabButton.ZIndex = 3
 upgradesTabButton.Parent = tabFrame
 
--- Settings Tab Button
 local settingsTabButton = Instance.new("TextButton")
 settingsTabButton.Size = UDim2.new(0.34, 0, 1, 0)
 settingsTabButton.Position = UDim2.new(0.66, 0, 0, 0)
@@ -222,7 +216,35 @@ settingsTabButton.MouseButton1Click:Connect(function()
 end)
 
 -- Toggles State
-local autoClick, autoAscend, autoUpgrade, autoRebirth = false, false, false, false
+local autoClick, autoAscend, autoUpgrade, autoRebirth, autoHatch = false, false, false, false, false
+
+-- Fetch Egg Names from EggHolder Folder
+local eggNames = {}
+local eggHolder = game.Workspace:FindFirstChild("EggHolder")
+if eggHolder then
+    for _, egg in pairs(eggHolder:GetChildren()) do
+        table.insert(eggNames, egg.Name)
+    end
+    if #eggNames > 0 then
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Eggs Loaded",
+            Text = "Found " .. #eggNames .. " eggs in EggHolder!",
+            Duration = 3
+        })
+    else
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Error",
+            Text = "No eggs found in EggHolder.",
+            Duration = 5
+        })
+    end
+else
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Error",
+        Text = "EggHolder not found in Workspace.",
+        Duration = 5
+    })
+end
 
 -- Function to Create a Toggle
 local function createToggle(parent, name, position, callback)
@@ -279,7 +301,7 @@ local function createToggle(parent, name, position, callback)
     end)
 end
 
--- Function to Create a Toggle with Number Input (for Auto Rebirth)
+-- Function to Create a Toggle with Number Input
 local function createToggleWithInput(parent, name, position, callback)
     local toggleFrame = Instance.new("Frame")
     toggleFrame.Size = UDim2.new(1, -20, 0, 50)
@@ -395,6 +417,134 @@ local function createKeybindInput(parent, name, position, defaultKey, callback)
     end)
 end
 
+-- New Function to Create a Toggle with Dropdown
+local function createToggleWithDropdown(parent, name, position, items, callback)
+    local toggleFrame = Instance.new("Frame")
+    toggleFrame.Size = UDim2.new(1, -20, 0, 50)
+    toggleFrame.Position = position
+    toggleFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    toggleFrame.BorderSizePixel = 0
+    toggleFrame.ZIndex = 3
+    toggleFrame.Parent = parent
+
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 10)
+    toggleCorner.Parent = toggleFrame
+
+    local toggleLabel = Instance.new("TextLabel")
+    toggleLabel.Size = UDim2.new(0.4, 0, 1, 0)
+    toggleLabel.Position = UDim2.new(0, 15, 0, 0)
+    toggleLabel.BackgroundTransparency = 1
+    toggleLabel.Text = name
+    toggleLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    toggleLabel.TextScaled = true
+    toggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    toggleLabel.Font = Enum.Font.Gotham
+    toggleLabel.ZIndex = 4
+    toggleLabel.Parent = toggleFrame
+
+    -- Dropdown Button
+    local dropdownButton = Instance.new("TextButton")
+    dropdownButton.Size = UDim2.new(0, 100, 0, 35)
+    dropdownButton.Position = UDim2.new(0.5, -10, 0.5, -17.5)
+    dropdownButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    dropdownButton.Text = items[1] or "Select Egg"
+    dropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    dropdownButton.TextScaled = true
+    dropdownButton.Font = Enum.Font.Gotham
+    dropdownButton.ZIndex = 4
+    dropdownButton.Parent = toggleFrame
+
+    local dropdownCorner = Instance.new("UICorner")
+    dropdownCorner.CornerRadius = UDim.new(0, 10)
+    dropdownCorner.Parent = dropdownButton
+
+    -- Dropdown List (Hidden by default)
+    local dropdownList = Instance.new("Frame")
+    dropdownList.Size = UDim2.new(0, 100, 0, 100)
+    dropdownList.Position = UDim2.new(0.5, -10, 0.5, 17.5)
+    dropdownList.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    dropdownList.BorderSizePixel = 0
+    dropdownList.ZIndex = 5
+    dropdownList.Visible = false
+    dropdownList.Parent = toggleFrame
+
+    local listCorner = Instance.new("UICorner")
+    listCorner.CornerRadius = UDim.new(0, 10)
+    listCorner.Parent = dropdownList
+
+    local scrollingFrame = Instance.new("ScrollingFrame")
+    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
+    scrollingFrame.BackgroundTransparency = 1
+    scrollingFrame.ScrollBarThickness = 4
+    scrollingFrame.ZIndex = 6
+    scrollingFrame.Parent = dropdownList
+
+    local uiListLayout = Instance.new("UIListLayout")
+    uiListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    uiListLayout.Parent = scrollingFrame
+
+    -- Populate Dropdown
+    local selectedItem = items[1] or nil
+    for i, item in ipairs(items) do
+        local itemButton = Instance.new("TextButton")
+        itemButton.Size = UDim2.new(1, 0, 0, 30)
+        itemButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+        itemButton.Text = item
+        itemButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        itemButton.TextScaled = true
+        itemButton.Font = Enum.Font.Gotham
+        itemButton.ZIndex = 7
+        itemButton.Parent = scrollingFrame
+
+        itemButton.MouseButton1Click:Connect(function()
+            selectedItem = item
+            dropdownButton.Text = item
+            dropdownList.Visible = false
+        end)
+    end
+
+    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, #items * 30)
+
+    dropdownButton.MouseButton1Click:Connect(function()
+        dropdownList.Visible = not dropdownList.Visible
+    end)
+
+    -- Toggle Button
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 70, 0, 35)
+    toggleButton.Position = UDim2.new(1, -80, 0.5, -17.5)
+    toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    toggleButton.Text = "OFF"
+    toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggleButton.TextScaled = true
+    toggleButton.Font = Enum.Font.GothamBold
+    toggleButton.ZIndex = 4
+    toggleButton.Parent = toggleFrame
+
+    local buttonCorner = Instance.new("UICorner")
+    buttonCorner.CornerRadius = UDim.new(0, 10)
+    buttonCorner.Parent = toggleButton
+
+    local isOn = false
+    toggleButton.MouseButton1Click:Connect(function()
+        isOn = not isOn
+        if isOn then
+            toggleButton.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+            toggleButton.Text = "ON"
+        else
+            toggleButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+            toggleButton.Text = "OFF"
+        end
+        callback(isOn, selectedItem)
+    end)
+
+    -- Update selected item when dropdown changes
+    return function()
+        return isOn, selectedItem
+    end
+end
+
 -- Create Toggles in Main Tab
 createToggle(mainTabContent, "Auto Click", UDim2.new(0, 10, 0, 10), function(state)
     autoClick = state
@@ -450,13 +600,45 @@ createToggleWithInput(mainTabContent, "Auto Rebirth", UDim2.new(0, 10, 0, 130), 
     end
 end)
 
+-- Updated Auto Hatch Toggle with Dropdown
+local getAutoHatchState
+createToggleWithDropdown(mainTabContent, "Auto Hatch", UDim2.new(0, 10, 0, 190), eggNames, function(state, selectedEgg)
+    autoHatch = state
+    if autoHatch then
+        if not selectedEgg then
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Error",
+                Text = "Please select an egg to hatch.",
+                Duration = 5
+            })
+            return
+        end
+        spawn(function()
+            while autoHatch and task.wait(0.01) do
+                local hatchEvent = game:GetService("ReplicatedStorage"):FindFirstChild("HatchEgg") or
+                                   game:GetService("ReplicatedStorage"):FindFirstChild("OpenEgg") or
+                                   (game:GetService("ReplicatedStorage"):FindFirstChild("Events") and game:GetService("ReplicatedStorage").Events:FindFirstChild("Hatch"))
+                if hatchEvent then
+                    local currentState, currentEgg = getAutoHatchState()
+                    if not currentState then break end -- Stop if toggle is turned off
+                    pcall(function()
+                        hatchEvent:FireServer(currentEgg) -- Use the selected egg
+                    end)
+                end
+            end
+        end)
+    end
+end)(function() -- Capture the return function to get the current state and selected egg
+    return autoHatch, getAutoHatchState and getAutoHatchState() and getAutoHatchState()[2] or nil
+end)
+
 -- Create Toggle in Upgrades Tab
 createToggle(upgradesTabContent, "Auto Upgrade", UDim2.new(0, 10, 0, 10), function(state)
     autoUpgrade = state
     if autoUpgrade then
         spawn(function()
             local upgrades = {"HatchSpeed", "ClickMulti", "GemChance", "RebirthButtons", "WalkSpeed", "MoreStorage", 
-                             "LuckMulti", "CriticalChance", "PetEquip", "GemMulti"} -- Prioritized HatchSpeed
+                             "LuckMulti", "CriticalChance", "PetEquip", "GemMulti"}
             while autoUpgrade do
                 for _, upgrade in ipairs(upgrades) do
                     if not autoUpgrade then break end
@@ -495,7 +677,7 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, gameProce
     end
 end)
 
--- Continuously Disable HatchDisplay to Skip Egg-Opening Animation
+-- Animation Suppression
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 
@@ -519,18 +701,37 @@ else
     })
 end
 
--- Continuously disable HatchDisplay every frame to prevent re-enabling
+-- Continuously disable any hatch-related GUIs
 RunService.RenderStepped:Connect(function()
-    local success, hatchDisplay = pcall(function()
-        return StarterGui:FindFirstChild("HatchDisplay")
-    end)
-    if success and hatchDisplay then
-        hatchDisplay.Enabled = false
+    for _, gui in pairs(StarterGui:GetChildren()) do
+        if gui:IsA("ScreenGui") and (gui.Name:match("Hatch") or gui.Name:match("Egg")) then
+            gui.Enabled = false
+        end
     end
 end)
 
--- Override ShareHatches Event to Prevent Animation Triggers
-local shareHatches = game:GetService("ReplicatedStorage").Events.ShareHatches
-shareHatches.OnClientEvent:Connect(function()
-    -- Do nothing to prevent the animation from being triggered
-end)
+-- Override ShareHatches Event
+local shareHatches = game:GetService("ReplicatedStorage").Events:FindFirstChild("ShareHatches")
+if shareHatches then
+    shareHatches.OnClientEvent:Connect(function()
+        -- Do nothing to prevent animation triggers
+    end)
+end
+
+-- Metatable Hook to Block Animation-Related Events
+local mt = getrawmetatable(game)
+local oldNamecall = mt.__namecall
+setreadonly(mt, false)
+
+mt.__namecall = function(self, ...)
+    local method = getnamecallmethod()
+    if method == "FireServer" and self.Parent == game:GetService("ReplicatedStorage") then
+        local name = self.Name:lower()
+        if name:match("hatch") or name:match("egg") or name:match("share") then
+            return -- Block animation-related events
+        end
+    end
+    return oldNamecall(self, ...)
+end
+
+setreadonly(mt, true)
