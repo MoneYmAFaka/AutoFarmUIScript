@@ -31,7 +31,7 @@ local function loadExternalScript()
         scriptContent = game:HttpGet(scriptUrl)
     end)
     if not success then
-        warn("Error fetching script from GitHub:", err)
+        warn("Error fetching script from GitHub: " .. tostring(err))
         return false
     end
 
@@ -41,7 +41,7 @@ local function loadExternalScript()
         scriptFunc = loadstring(scriptContent)
     end)
     if not success then
-        warn("Error compiling script:", err)
+        warn("Error compiling script: " .. tostring(err))
         return false
     end
 
@@ -53,7 +53,7 @@ local function loadExternalScript()
     -- Execute the script
     success, err = pcall(scriptFunc)
     if not success then
-        warn("Error executing script:", err)
+        warn("Error executing script: " .. tostring(err))
         return false
     else
         print("External script executed successfully!")
@@ -130,7 +130,7 @@ local function createUI()
             end)
 
             if not success then
-                warn("Error opening case: " .. err)
+                warn("Error opening case: " .. tostring(err))
                 toggleButton.Text = "Error - Try Again"
                 toggleButton.BackgroundColor3 = Color3.fromRGB(120, 60, 60)
                 wait(1) -- Brief error display
@@ -143,7 +143,7 @@ local function createUI()
     end)
 
     if not success then
-        warn("UI Creation Failed: " .. errorMsg)
+        warn("UI Creation Failed: " .. tostring(errorMsg))
         -- Fallback UI
         local player = Players.LocalPlayer
         if player and player:FindFirstChild("PlayerGui") then
@@ -175,7 +175,7 @@ local success, err = pcall(function()
 end)
 
 if not success then
-    warn("Script initialization failed: " .. err)
+    warn("Script initialization failed: " .. tostring(err))
 else
     print("Script initialized successfully!")
 end
