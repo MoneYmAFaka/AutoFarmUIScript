@@ -8,11 +8,14 @@ local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-I
 -- Configuration
 local Config = {
     rollEnabled = false,
-    rollDelay = 0.1 -- Roll delay in seconds
+    rollDelay = 0.05, -- Minimum delay, adjust based on server response
+    aggressiveMode = false -- Option to ignore local delay entirely
 }
 
 -- Variables
-local args = {} -- Arguments for roll function
+local args = {}
+local lastRollTime = 0
+local isRolling = false
 
 -- Create Window
 local Window = Rayfield:CreateWindow({
@@ -32,12 +35,23 @@ local RollTab = Window:CreateTab("Auto Roll")
 
 -- Roll Function
 local function performRoll()
-    ReplicatedStorage:WaitForChild("Knit", 9e9)
-        :WaitForChild("Services", 9e9)
-        :WaitForChild("RollService", 9e9)
-        :WaitForChild("RF", 9e9)
-        :WaitForChild("PlayerRoll", 9e9)
-        :InvokeServer(unpack(args))
+    if isRolling then return end -- Prevent overlapping calls
+    isRolling = true
+    
+    local success, result = pcall(function()
+        return ReplicatedStorage:WaitForChild("Knit", 9e9)
+            :WaitForChild("Services", 9e9)
+            :WaitForChild("RollService", 9e9)
+            :WaitForChild("RF", 9e9)
+            :WaitForChild("PlayerRoll", 9e9)
+            :InvokeServer(unpack(args))
+    end)
+    
+    isRolling = false
+    if not success then
+        warn("Roll failed: " .. result)
+    end
+    return success
 end
 
 -- UI Components
@@ -52,7 +66,7 @@ RollTab:CreateToggle({
 
 RollTab:CreateSlider({
     Name = "Roll Delay",
-    Range = {0.05, 1},
+    Range = {0, 1},
     Increment = 0.05,
     Suffix = "s",
     CurrentValue = Config.rollDelay,
@@ -62,12 +76,29 @@ RollTab:CreateSlider({
     end
 })
 
+RollTab:CreateToggle({
+    Name = "Aggressive Mode",
+    CurrentValue = Config.aggressiveMode,
+    Flag = "AggressiveToggle",
+    Callback = function(Value)
+        Config.aggressiveMode = Value
+    end
+})
+
 -- Main Loop
-RunService.RenderStepped:Connect(function()
-    if Config.rollEnabled then
-        pcall(function()
-            performRoll()
-        end)
-        task.wait(Config.rollDelay) -- Wait between rolls
+RunService.RenderStepped:Connect(function(deltaTime)
+    if not Config.rollEnabled or isRolling then return end
+    
+    local currentTime = tick()
+    if Config.aggressiveMode then
+        -- Attempt roll as fast as possible
+        performRoll()
+    else
+        -- Respect configured delay
+        if currentTime - lastRollTime >= Config.rollDelay then
+            if performRoll() then
+                lastRollTime = currentTime
+            end
+        end
     end
 end)
