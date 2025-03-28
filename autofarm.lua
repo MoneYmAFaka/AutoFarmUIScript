@@ -31,28 +31,40 @@ local RebirthService = Services and Services:GetChildren()[6]
 local RebirthRF = RebirthService and waitForPath(RebirthService, "RF")
 local RebirthRemote = RebirthRF and waitForPath(RebirthRF, "jag känner en bot, hon heter anna, anna heter hon")
 
--- Create Window
+-- Add new remote function paths
+local PrestigeService = Services and Services:GetChildren()[27]
+local PrestigeRF = PrestigeService and waitForPath(PrestigeService, "RF")
+local PrestigeRemote = PrestigeRF and waitForPath(PrestigeRF, "jag känner en bot, hon heter anna, anna heter hon")
+
+-- Create Window with new name
 local Window = Rayfield:CreateWindow({
-   Name = "Auto Click",
+   Name = "Auto Farm",
    LoadingTitle = "Loading...",
    LoadingSubtitle = "",
    ConfigurationSaving = {
-      Enabled = false
+      Enabled = true,
+      FolderName = "AutoFarmConfig",
+      FileName = "Config"
    },
    KeySystem = false
 })
 
 -- Create Tabs
 local MainTab = Window:CreateTab("Main")
+local EggsTab = Window:CreateTab("Eggs")
 local SettingsTab = Window:CreateTab("Settings")
 
 -- Variables
 local args = {}
 local isClicking = false
 local isRebirthing = false
+local isPrestiging = false
+local isHatching = false
+local hatchMode = "Single"
 local rebirthCount = 0
 
 -- Main Tab Features
+MainTab:CreateSection("Auto Click")
 MainTab:CreateToggle({
    Name = "Auto Click",
    CurrentValue = false,
@@ -72,28 +84,21 @@ MainTab:CreateToggle({
    end
 })
 
--- Remove the old input field and replace with buttons
-MainTab:CreateLabel("Rebirth Amount Selection")
+-- Rebirth Section
+MainTab:CreateSection("Auto Rebirth")
 
--- Create buttons for different rebirth amounts
-local rebirthAmounts = {1, 5, 10, 25, 50, 100}
-local selectedAmount = 1
+MainTab:CreateSlider({
+   Name = "Rebirth Amount",
+   Range = {1, 100},
+   Increment = 1,
+   Suffix = "Rebirths",
+   CurrentValue = 1,
+   Flag = "RebirthAmount",
+   Callback = function(Value)
+        selectedAmount = Value
+   end,
+})
 
--- Create a label to show current selected amount
-local amountLabel = MainTab:CreateLabel("Selected Amount: 1")
-
--- Create buttons for each amount
-for _, amount in ipairs(rebirthAmounts) do
-    MainTab:CreateButton({
-        Name = amount .. " Rebirths",
-        Callback = function()
-            selectedAmount = amount
-            amountLabel:Set("Selected Amount: " .. amount)
-        end
-    })
-end
-
--- Update the Auto Rebirth toggle to use selectedAmount
 MainTab:CreateToggle({
    Name = "Auto Rebirth",
    CurrentValue = false,
@@ -107,13 +112,82 @@ MainTab:CreateToggle({
                         local args = {
                             [1] = selectedAmount
                         }
-                        local success, result = pcall(function()
-                            RebirthRemote:InvokeServer(unpack(args))
-                        end)
-                        if not success then
-                            warn("Rebirth failed:", result)
-                        end
+                        RebirthRemote:InvokeServer(unpack(args))
                     end
+                    task.wait(0.1)
+                end
+            end)
+        end
+   end
+})
+
+-- Prestige Section
+MainTab:CreateSection("Auto Prestige")
+
+MainTab:CreateToggle({
+   Name = "Auto Prestige",
+   CurrentValue = false,
+   Flag = "AutoPrestigeToggle",
+   Callback = function(Value)
+        isPrestiging = Value
+        if Value then
+            spawn(function()
+                while isPrestiging do
+                    if PrestigeRemote then
+                        local success = pcall(function()
+                            PrestigeRemote:InvokeServer(unpack(args))
+                        end)
+                        -- Only try again after 5 seconds if not successful
+                        task.wait(success and 0.1 or 5)
+                    else
+                        task.wait(1)
+                    end
+                end
+            end)
+        end
+   end
+})
+
+-- Eggs Tab
+EggsTab:CreateSection("Auto Hatch")
+
+-- Egg Type Selection
+EggsTab:CreateDropdown({
+   Name = "Egg Type",
+   Options = {"Basic"},
+   CurrentOption = "Basic",
+   Flag = "SelectedEgg",
+   Callback = function(Option)
+        selectedEgg = Option
+   end,
+})
+
+-- Hatch Mode Selection
+EggsTab:CreateDropdown({
+   Name = "Hatch Mode",
+   Options = {"Single", "Triple"},
+   CurrentOption = "Single",
+   Flag = "HatchMode",
+   Callback = function(Option)
+        hatchMode = Option
+   end,
+})
+
+EggsTab:CreateToggle({
+   Name = "Auto Hatch",
+   CurrentValue = false,
+   Flag = "AutoHatchToggle",
+   Callback = function(Value)
+        isHatching = Value
+        if Value then
+            spawn(function()
+                while isHatching do
+                    -- Replace with actual egg remote when you have it
+                    local args = {
+                        [1] = selectedEgg,
+                        [2] = hatchMode == "Triple"
+                    }
+                    -- Add egg remote invocation here when you have it
                     task.wait(0.1)
                 end
             end)
