@@ -1,231 +1,193 @@
--- Constants
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Load Rayfield UI Library
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
 
--- Wait for Knit packages more reliably
-local function waitForPath(parent, name, timeout)
-    local start = tick()
-    local instance
-    
-    repeat
-        instance = parent:FindFirstChild(name)
-        task.wait()
-    until instance or (tick() - start) >= (timeout or 30)
-    
-    return instance
-end
+-- Variables
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local isAimbotEnabled = false
+local aimPart = "Head"
+local sensitivity = 1
+local teamCheck = false
+local wallCheck = true
+local aimKey = Enum.UserInputType.MouseButton2 -- Right Mouse Button
 
--- Get the service more reliably
-local Packages = waitForPath(ReplicatedStorage, "Packages")
-local Knit = waitForPath(Packages, "Knit")
-local Services = waitForPath(Knit, "Services")
-local TargetService = Services and Services:GetChildren()[22]
-local RemoteEvent = TargetService and waitForPath(TargetService, "RE")
-local TargetRE = RemoteEvent and RemoteEvent:GetChildren()[3]
-
--- Add new remote function path for rebirth
-local RebirthService = Services and Services:GetChildren()[6]
-local RebirthRF = RebirthService and waitForPath(RebirthService, "RF")
-local RebirthRemote = RebirthRF and waitForPath(RebirthRF, "jag känner en bot, hon heter anna, anna heter hon")
-
--- Add new remote function paths
-local PrestigeService = Services and Services:GetChildren()[27]
-local PrestigeRF = PrestigeService and waitForPath(PrestigeService, "RF")
-local PrestigeRemote = PrestigeRF and waitForPath(PrestigeRF, "jag känner en bot, hon heter anna, anna heter hon")
-
--- Create Window with new name
+-- Create Window
 local Window = Rayfield:CreateWindow({
-   Name = "Auto Farm",
+   Name = "Combat Helper",
    LoadingTitle = "Loading...",
    LoadingSubtitle = "",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "AutoFarmConfig",
+      FolderName = "CombatConfig",
       FileName = "Config"
    },
    KeySystem = false
 })
 
--- Create Tabs
-local MainTab = Window:CreateTab("Main")
-local EggsTab = Window:CreateTab("Eggs")
-local SettingsTab = Window:CreateTab("Settings")
+-- Create Main Tab
+local MainTab = Window:CreateTab("Aimbot")
 
--- Variables
-local args = {}
-local isClicking = false
-local isRebirthing = false
-local isPrestiging = false
-local isHatching = false
-local hatchMode = "Single"
-local rebirthCount = 0
-
--- Main Tab Features
-MainTab:CreateSection("Auto Click")
+-- Aimbot Toggle
 MainTab:CreateToggle({
-   Name = "Auto Click",
+   Name = "Enable Aimbot",
    CurrentValue = false,
-   Flag = "AutoClickToggle",
+   Flag = "AimbotToggle",
    Callback = function(Value)
-        isClicking = Value
-        if Value then
-            spawn(function()
-                while isClicking do
-                    if TargetRE then
-                        TargetRE:FireServer(unpack(args))
-                    end
-                    task.wait()
-                end
-            end)
-        end
+        isAimbotEnabled = Value
    end
 })
 
--- Rebirth Section
-MainTab:CreateSection("Auto Rebirth")
+-- Aim Part Selection
+MainTab:CreateDropdown({
+   Name = "Aim Part",
+   Options = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"},
+   CurrentOption = "Head",
+   Flag = "AimPartDropdown",
+   Callback = function(Option)
+        aimPart = Option
+   end
+})
 
+-- Sensitivity Slider
 MainTab:CreateSlider({
-   Name = "Rebirth Amount",
-   Range = {1, 100},
-   Increment = 1,
-   Suffix = "Rebirths",
+   Name = "Aim Sensitivity",
+   Range = {0.1, 10},
+   Increment = 0.1,
+   Suffix = "x",
    CurrentValue = 1,
-   Flag = "RebirthAmount",
+   Flag = "AimSensitivity",
    Callback = function(Value)
-        selectedAmount = Value
-   end,
+        sensitivity = Value
+   end
 })
 
+-- Team Check Toggle
 MainTab:CreateToggle({
-   Name = "Auto Rebirth",
+   Name = "Team Check",
    CurrentValue = false,
-   Flag = "AutoRebirthToggle",
+   Flag = "TeamCheck",
    Callback = function(Value)
-        isRebirthing = Value
-        if Value then
-            spawn(function()
-                while isRebirthing do
-                    if RebirthRemote then
-                        local args = {
-                            [1] = selectedAmount
-                        }
-                        RebirthRemote:InvokeServer(unpack(args))
-                    end
-                    task.wait(0.1)
-                end
-            end)
-        end
+        teamCheck = Value
    end
 })
 
--- Prestige Section
-MainTab:CreateSection("Auto Prestige")
-
+-- Wall Check Toggle
 MainTab:CreateToggle({
-   Name = "Auto Prestige",
-   CurrentValue = false,
-   Flag = "AutoPrestigeToggle",
+   Name = "Wall Check",
+   CurrentValue = true,
+   Flag = "WallCheck",
    Callback = function(Value)
-        isPrestiging = Value
-        if Value then
-            spawn(function()
-                while isPrestiging do
-                    if PrestigeRemote then
-                        local success = pcall(function()
-                            PrestigeRemote:InvokeServer(unpack(args))
-                        end)
-                        -- Only try again after 5 seconds if not successful
-                        task.wait(success and 0.1 or 5)
-                    else
-                        task.wait(1)
+        wallCheck = Value
+   end
+})
+
+-- FOV Slider
+local fovSize = 400
+MainTab:CreateSlider({
+   Name = "FOV Size",
+   Range = {50, 800},
+   Increment = 50,
+   Suffix = "px",
+   CurrentValue = 400,
+   Flag = "FOVSize",
+   Callback = function(Value)
+        fovSize = Value
+   end
+})
+
+-- FOV Circle Drawing
+local circle = Drawing.new("Circle")
+circle.Thickness = 2
+circle.NumSides = 48
+circle.Radius = fovSize / 2
+circle.Filled = false
+circle.Transparency = 1
+circle.Color = Color3.new(1, 1, 1)
+circle.Visible = false
+
+-- Show FOV Toggle
+MainTab:CreateToggle({
+   Name = "Show FOV",
+   CurrentValue = false,
+   Flag = "ShowFOV",
+   Callback = function(Value)
+        circle.Visible = Value
+   end
+})
+
+-- Utility Functions
+local function isVisible(part)
+    if not wallCheck then return true end
+    
+    local origin = Camera.CFrame.Position
+    local raycastParams = RaycastParams.new()
+    raycastParams.FilterDescendantsInstances = {LocalPlayer.Character, part.Parent}
+    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
+    
+    local direction = (part.Position - origin).Unit
+    local result = workspace:Raycast(origin, direction * 1000, raycastParams)
+    
+    return not result or result.Instance:IsDescendantOf(part.Parent)
+end
+
+local function getClosestPlayer()
+    local closestPlayer = nil
+    local shortestDistance = fovSize
+    local mousePos = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            if player.Character and player.Character:FindFirstChild(aimPart) and player.Character:FindFirstChild("Humanoid") then
+                if player.Character.Humanoid.Health > 0 then
+                    if teamCheck and player.Team == LocalPlayer.Team then continue end
+                    
+                    local part = player.Character[aimPart]
+                    if not isVisible(part) then continue end
+                    
+                    local screenPoint = Camera:WorldToScreenPoint(part.Position)
+                    local distance = (Vector2.new(screenPoint.X, screenPoint.Y) - mousePos).Magnitude
+                    
+                    if distance < shortestDistance then
+                        closestPlayer = player
+                        shortestDistance = distance
                     end
                 end
-            end)
+            end
         end
-   end
-})
+    end
+    
+    return closestPlayer
+end
 
--- Eggs Tab
-EggsTab:CreateSection("Auto Hatch")
+-- Update FOV Circle
+RunService.RenderStepped:Connect(function()
+    circle.Position = UserInputService:GetMouseLocation()
+end)
 
--- Egg Type Selection
-EggsTab:CreateDropdown({
-   Name = "Egg Type",
-   Options = {"Basic"},
-   CurrentOption = "Basic",
-   Flag = "SelectedEgg",
-   Callback = function(Option)
-        selectedEgg = Option
-   end,
-})
-
--- Hatch Mode Selection
-EggsTab:CreateDropdown({
-   Name = "Hatch Mode",
-   Options = {"Single", "Triple"},
-   CurrentOption = "Single",
-   Flag = "HatchMode",
-   Callback = function(Option)
-        hatchMode = Option
-   end,
-})
-
-EggsTab:CreateToggle({
-   Name = "Auto Hatch",
-   CurrentValue = false,
-   Flag = "AutoHatchToggle",
-   Callback = function(Value)
-        isHatching = Value
-        if Value then
-            spawn(function()
-                while isHatching do
-                    -- Replace with actual egg remote when you have it
-                    local args = {
-                        [1] = selectedEgg,
-                        [2] = hatchMode == "Triple"
-                    }
-                    -- Add egg remote invocation here when you have it
-                    task.wait(0.1)
-                end
-            end)
-        end
-   end
-})
-
--- Settings Tab Features
-local keybind = "LeftShift"
-SettingsTab:CreateDropdown({
-   Name = "UI Toggle Key",
-   Options = {"LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt", "RightAlt"},
-   CurrentOption = keybind,
-   Flag = "KeybindDropdown",
-   Callback = function(Option)
-        keybind = Option
-   end,
-})
-
--- UI Toggle Keybind
-UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if not gameProcessed then
-        local keyPressed = input.KeyCode.Name
-        if keyPressed == keybind then
-            Rayfield:ToggleWindow()
+-- Main Aimbot Loop
+RunService.RenderStepped:Connect(function()
+    if isAimbotEnabled and UserInputService:IsMouseButtonPressed(aimKey) then
+        local target = getClosestPlayer()
+        if target and target.Character then
+            local part = target.Character[aimPart]
+            local pos = Camera:WorldToScreenPoint(part.Position)
+            local mousePos = Vector2.new(UserInputService:GetMouseLocation().X, UserInputService:GetMouseLocation().Y)
+            local moveVector = (Vector2.new(pos.X, pos.Y) - mousePos) * sensitivity
+            
+            mousemoverel(moveVector.X/10, moveVector.Y/10)
         end
     end
 end)
 
--- Create Status Label
-local StatusLabel = MainTab:CreateLabel("Status: Ready")
-
--- Update status if remote event is not found
-if not TargetRE then
-    StatusLabel:Set("Status: Error - Remote Event not found!")
-end
-
--- Update status label to include rebirth remote status
-if not RebirthRemote then
-    StatusLabel:Set("Status: Error - Rebirth Remote not found!")
-end 
+-- Cleanup
+game:GetService("CoreGui").ChildRemoved:Connect(function(child)
+    if child.Name == "Combat Helper" then
+        circle:Remove()
+    end
+end) 
