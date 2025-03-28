@@ -72,16 +72,28 @@ MainTab:CreateToggle({
    end
 })
 
-MainTab:CreateInput({
-   Name = "Auto Rebirth Amount",
-   PlaceholderText = "Enter amount",
-   NumbersOnly = true,
-   RemoveTextAfterFocusLost = false,
-   Callback = function(Text)
-        rebirthCount = tonumber(Text) or 0
-   end,
-})
+-- Remove the old input field and replace with buttons
+MainTab:CreateLabel("Rebirth Amount Selection")
 
+-- Create buttons for different rebirth amounts
+local rebirthAmounts = {1, 5, 10, 25, 50, 100}
+local selectedAmount = 1
+
+-- Create a label to show current selected amount
+local amountLabel = MainTab:CreateLabel("Selected Amount: 1")
+
+-- Create buttons for each amount
+for _, amount in ipairs(rebirthAmounts) do
+    MainTab:CreateButton({
+        Name = amount .. " Rebirths",
+        Callback = function()
+            selectedAmount = amount
+            amountLabel:Set("Selected Amount: " .. amount)
+        end
+    })
+end
+
+-- Update the Auto Rebirth toggle to use selectedAmount
 MainTab:CreateToggle({
    Name = "Auto Rebirth",
    CurrentValue = false,
@@ -93,9 +105,8 @@ MainTab:CreateToggle({
                 while isRebirthing do
                     if RebirthRemote then
                         local args = {
-                            [1] = rebirthCount or 1
+                            [1] = selectedAmount
                         }
-                        -- Using InvokeServer instead of FireServer since it's an RF
                         local success, result = pcall(function()
                             RebirthRemote:InvokeServer(unpack(args))
                         end)
@@ -103,7 +114,7 @@ MainTab:CreateToggle({
                             warn("Rebirth failed:", result)
                         end
                     end
-                    task.wait(0.1) -- Small delay between rebirths
+                    task.wait(0.1)
                 end
             end)
         end
