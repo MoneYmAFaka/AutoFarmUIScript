@@ -12,7 +12,9 @@ local Config = {
 }
 
 -- Variables
-local args = {}
+local args = {
+    [1] = "Equip"
+}
 local lastRollTime = 0
 local isRolling = false
 local detectedCooldown = 0.05 -- Will update based on server response
@@ -40,17 +42,16 @@ local function performRoll()
     isRolling = true
     
     local success, result = pcall(function()
-        return game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9)
-            :WaitForChild("ZachRLL", 9e9)
-            :InvokeServer(unpack(args))
+        game:GetService("ReplicatedStorage").Events.RolledFromClient:FireServer(unpack(args))
+        return true -- FireServer doesn't return a value, so we assume success unless it errors
     end)
     
     isRolling = false
-    if success and result ~= nil then -- Assume nil means cooldown rejection
+    if success then
         lastSuccessTime = tick()
         return true
     else
-        if not success then warn("Roll failed: " .. result) end
+        warn("Roll failed: " .. result)
         return false
     end
 end
@@ -65,7 +66,9 @@ RollTab:CreateToggle({
         if Value then
             -- Start the rolling loop in a new thread
             task.spawn(function()
-                while Config.rollEnabled do
+                while true do
+                    if not Config.rollEnabled then break end
+                    
                     local currentTime = tick()
                     local timeSinceLastRoll = currentTime - lastRollTime
                     
