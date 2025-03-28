@@ -1,181 +1,146 @@
--- Services
-local Players = game:GetService("Players")
+-- Constants
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
 
--- GitHub script URL
-local scriptUrl = "https://raw.githubusercontent.com/MoneYmAFaka/AutoFarmUIScript/main/autofarm.lua"
+-- Load Rayfield UI Library
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
 
--- Arguments for the case opening
-local args = {
-    [1] = "Free Case",
-    [2] = false
-}
-
--- Step 1: Load the external script from GitHub
-local function loadExternalScript()
-    -- Check if loadstring exists
-    if not loadstring then
-        warn("Error: loadstring is not available in this executor")
-        return false
-    end
-
-    -- Check if HttpGet exists
-    if not game.HttpGet then
-        warn("Error: game:HttpGet is not available")
-        return false
-    end
-
-    -- Fetch the script
-    local scriptContent
-    local success, err = pcall(function()
-        scriptContent = game:HttpGet(scriptUrl)
-    end)
-    if not success then
-        warn("Error fetching script from GitHub: " .. tostring(err))
-        return false
-    end
-
-    -- Load and compile the script
-    local scriptFunc
-    success, err = pcall(function()
-        scriptFunc = loadstring(scriptContent)
-    end)
-    if not success then
-        warn("Error compiling script: " .. tostring(err))
-        return false
-    end
-
-    if not scriptFunc then
-        warn("Error: loadstring returned nil")
-        return false
-    end
-
-    -- Execute the script
-    success, err = pcall(scriptFunc)
-    if not success then
-        warn("Error executing script: " .. tostring(err))
-        return false
-    else
-        print("External script executed successfully!")
-        return true
-    end
+-- Wait for Knit packages more reliably
+local function waitForPath(parent, name, timeout)
+    local start = tick()
+    local instance
+    
+    repeat
+        instance = parent:FindFirstChild(name)
+        task.wait()
+    until instance or (tick() - start) >= (timeout or 30)
+    
+    return instance
 end
 
--- Step 2: Create the UI for case opening
-local function createUI()
-    local success, errorMsg = pcall(function()
-        local player = Players.LocalPlayer
-        if not player then
-            error("LocalPlayer not found")
-        end
+-- Get the service more reliably
+local Packages = waitForPath(ReplicatedStorage, "Packages")
+local Knit = waitForPath(Packages, "Knit")
+local Services = waitForPath(Knit, "Services")
+local TargetService = Services and Services:GetChildren()[22]
+local RemoteEvent = TargetService and waitForPath(TargetService, "RE")
+local TargetRE = RemoteEvent and RemoteEvent:GetChildren()[3]
 
-        local playerGui = player:WaitForChild("PlayerGui", 5) -- 5 second timeout
-        if not playerGui then
-            error("PlayerGui not found")
-        end
+-- Add new remote function path for rebirth
+local RebirthService = Services and Services:GetChildren()[6]
+local RebirthRF = RebirthService and waitForPath(RebirthService, "RF")
+local RebirthRemote = RebirthRF and waitForPath(RebirthRF, "jag känner en bot, hon heter anna, anna heter hon")
 
-        -- Create ScreenGui
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "CaseOpenerUI"
-        screenGui.ResetOnSpawn = false
-        screenGui.Parent = playerGui
+-- Create Window
+local Window = Rayfield:CreateWindow({
+   Name = "Auto Click",
+   LoadingTitle = "Loading...",
+   LoadingSubtitle = "",
+   ConfigurationSaving = {
+      Enabled = false
+   },
+   KeySystem = false
+})
 
-        -- Create Frame
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 200, 0, 100)
-        frame.Position = UDim2.new(0.5, -100, 0.5, -50)
-        frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        frame.Parent = screenGui
+-- Create Tabs
+local MainTab = Window:CreateTab("Main")
+local SettingsTab = Window:CreateTab("Settings")
 
-        -- Create Button
-        local toggleButton = Instance.new("TextButton")
-        toggleButton.Size = UDim2.new(0, 150, 0, 50)
-        toggleButton.Position = UDim2.new(0.5, -75, 0.5, -25)
-        toggleButton.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
-        toggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        toggleButton.Text = "Open Free Case"
-        toggleButton.Parent = frame
+-- Variables
+local args = {}
+local isClicking = false
+local isRebirthing = false
+local rebirthCount = 0
 
-        -- Button functionality with error handling
-        local isProcessing = false
-        toggleButton.MouseButton1Click:Connect(function()
-            if isProcessing then return end
-
-            local success, err = pcall(function()
-                isProcessing = true
-                toggleButton.Text = "Opening..."
-                toggleButton.BackgroundColor3 = Color3.fromRGB(120, 60, 60)
-
-                -- Get the remote event with error checking
-                local remoteEvent = ReplicatedStorage:GetChildren()[25]
-                if not remoteEvent then
-                    error("Remote event not found at index 25")
+-- Main Tab Features
+MainTab:CreateToggle({
+   Name = "Auto Click",
+   CurrentValue = false,
+   Flag = "AutoClickToggle",
+   Callback = function(Value)
+        isClicking = Value
+        if Value then
+            spawn(function()
+                while isClicking do
+                    if TargetRE then
+                        TargetRE:FireServer(unpack(args))
+                    end
+                    task.wait()
                 end
-
-                -- Fire server with timeout
-                local firedSuccessfully = false
-                task.spawn(function()
-                    remoteEvent:FireServer(unpack(args))
-                    firedSuccessfully = true
-                end)
-
-                wait(2) -- Wait for server response
-                if not firedSuccessfully then
-                    error("Server request timed out")
-                end
-
-                -- Reset button
-                toggleButton.Text = "Open Free Case"
-                toggleButton.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
             end)
-
-            if not success then
-                warn("Error opening case: " .. tostring(err))
-                toggleButton.Text = "Error - Try Again"
-                toggleButton.BackgroundColor3 = Color3.fromRGB(120, 60, 60)
-                wait(1) -- Brief error display
-                toggleButton.Text = "Open Free Case"
-                toggleButton.BackgroundColor3 = Color3.fromRGB(60, 120, 60)
-            end
-
-            isProcessing = false
-        end)
-    end)
-
-    if not success then
-        warn("UI Creation Failed: " .. tostring(errorMsg))
-        -- Fallback UI
-        local player = Players.LocalPlayer
-        if player and player:FindFirstChild("PlayerGui") then
-            local fallbackGui = Instance.new("ScreenGui")
-            local errorText = Instance.new("TextLabel")
-            errorText.Text = "Case Opener Failed to Load"
-            errorText.Size = UDim2.new(0, 200, 0, 50)
-            errorText.Parent = fallbackGui
-            fallbackGui.Parent = player.PlayerGui
         end
-        return false
-    end
-    return true
-end
+   end
+})
 
--- Step 3: Main execution with error handling
-local success, err = pcall(function()
-    -- Load the external script first
-    local scriptLoaded = loadExternalScript()
-    if not scriptLoaded then
-        warn("Continuing without external script due to loading failure")
-    end
+MainTab:CreateInput({
+   Name = "Auto Rebirth Amount",
+   PlaceholderText = "Enter amount",
+   NumbersOnly = true,
+   RemoveTextAfterFocusLost = false,
+   Callback = function(Text)
+        rebirthCount = tonumber(Text) or 0
+   end,
+})
 
-    -- Create the UI
-    local uiCreated = createUI()
-    if not uiCreated then
-        error("Failed to create UI")
+MainTab:CreateToggle({
+   Name = "Auto Rebirth",
+   CurrentValue = false,
+   Flag = "AutoRebirthToggle",
+   Callback = function(Value)
+        isRebirthing = Value
+        if Value then
+            spawn(function()
+                while isRebirthing do
+                    if RebirthRemote then
+                        local args = {
+                            [1] = rebirthCount or 1
+                        }
+                        -- Using InvokeServer instead of FireServer since it's an RF
+                        local success, result = pcall(function()
+                            RebirthRemote:InvokeServer(unpack(args))
+                        end)
+                        if not success then
+                            warn("Rebirth failed:", result)
+                        end
+                    end
+                    task.wait(0.1) -- Small delay between rebirths
+                end
+            end)
+        end
+   end
+})
+
+-- Settings Tab Features
+local keybind = "LeftShift"
+SettingsTab:CreateDropdown({
+   Name = "UI Toggle Key",
+   Options = {"LeftShift", "RightShift", "LeftControl", "RightControl", "LeftAlt", "RightAlt"},
+   CurrentOption = keybind,
+   Flag = "KeybindDropdown",
+   Callback = function(Option)
+        keybind = Option
+   end,
+})
+
+-- UI Toggle Keybind
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if not gameProcessed then
+        local keyPressed = input.KeyCode.Name
+        if keyPressed == keybind then
+            Rayfield:ToggleWindow()
+        end
     end
 end)
 
-if not success then
-    warn("Script initialization failed: " .. tostring(err))
-else
-    print("Script initialized successfully!")
+-- Create Status Label
+local StatusLabel = MainTab:CreateLabel("Status: Ready")
+
+-- Update status if remote event is not found
+if not TargetRE then
+    StatusLabel:Set("Status: Error - Remote Event not found!")
 end
+
+-- Update status label to include rebirth remote status
+if not RebirthRemote then
+    StatusLabel:Set("Status: Error - Rebirth Remote not found!")
+end 
