@@ -1,6 +1,5 @@
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local RunService = game:GetService("RunService")
 
 -- Load Rayfield UI Library
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
@@ -8,14 +7,16 @@ local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-I
 -- Configuration
 local Config = {
     rollEnabled = false,
-    rollDelay = 0.05, -- Minimum delay, adjust based on server response
-    aggressiveMode = false -- Option to ignore local delay entirely
+    baseDelay = 0.05, -- Starting delay, will adjust based on server response
+    autoAdjust = true -- Automatically detect server cooldown
 }
 
 -- Variables
 local args = {}
 local lastRollTime = 0
 local isRolling = false
+local detectedCooldown = 0.05 -- Will update based on server response
+local lastSuccessTime = 0
 
 -- Create Window
 local Window = Rayfield:CreateWindow({
@@ -35,23 +36,23 @@ local RollTab = Window:CreateTab("Auto Roll")
 
 -- Roll Function
 local function performRoll()
-    if isRolling then return end -- Prevent overlapping calls
+    if isRolling then return false end
     isRolling = true
     
     local success, result = pcall(function()
-        return ReplicatedStorage:WaitForChild("Knit", 9e9)
-            :WaitForChild("Services", 9e9)
-            :WaitForChild("RollService", 9e9)
-            :WaitForChild("RF", 9e9)
-            :WaitForChild("PlayerRoll", 9e9)
+        return game:GetService("ReplicatedStorage"):WaitForChild("Remotes", 9e9)
+            :WaitForChild("ZachRLL", 9e9)
             :InvokeServer(unpack(args))
     end)
     
     isRolling = false
-    if not success then
-        warn("Roll failed: " .. result)
+    if success and result ~= nil then -- Assume nil means cooldown rejection
+        lastSuccessTime = tick()
+        return true
+    else
+        if not success then warn("Roll failed: " .. result) end
+        return false
     end
-    return success
 end
 
 -- UI Components
@@ -61,44 +62,54 @@ RollTab:CreateToggle({
     Flag = "RollToggle",
     Callback = function(Value)
         Config.rollEnabled = Value
+        if Value then
+            -- Start the rolling loop in a new thread
+            task.spawn(function()
+                while Config.rollEnabled do
+                    local currentTime = tick()
+                    local timeSinceLastRoll = currentTime - lastRollTime
+                    
+                    if timeSinceLastRoll >= detectedCooldown then
+                        local success = performRoll()
+                        lastRollTime = currentTime
+                        
+                        if Config.autoAdjust and not success then
+                            -- Increase delay if roll fails
+                            detectedCooldown = math.min(detectedCooldown + 0.05, 1)
+                            RollTab:UpdateLabel("Detected Cooldown: " .. string.format("%.2f", detectedCooldown) .. "s")
+                        elseif Config.autoAdjust and success and currentTime - lastSuccessTime < detectedCooldown then
+                            -- Decrease delay if roll succeeds faster
+                            detectedCooldown = math.max(currentTime - lastSuccessTime, Config.baseDelay)
+                            RollTab:UpdateLabel("Detected Cooldown: " .. string.format("%.2f", detectedCooldown) .. "s")
+                        end
+                    end
+                    
+                    task.wait(math.max(detectedCooldown - (tick() - lastRollTime), 0)) -- Wait remaining time
+                end
+            end)
+        end
     end
 })
 
 RollTab:CreateSlider({
-    Name = "Roll Delay",
+    Name = "Base Delay",
     Range = {0, 1},
     Increment = 0.05,
     Suffix = "s",
-    CurrentValue = Config.rollDelay,
-    Flag = "RollDelay",
+    CurrentValue = Config.baseDelay,
+    Flag = "BaseDelay",
     Callback = function(Value)
-        Config.rollDelay = Value
+        Config.baseDelay = Value
     end
 })
 
 RollTab:CreateToggle({
-    Name = "Aggressive Mode",
-    CurrentValue = Config.aggressiveMode,
-    Flag = "AggressiveToggle",
+    Name = "Auto-Adjust Delay",
+    CurrentValue = Config.autoAdjust,
+    Flag = "AutoAdjustToggle",
     Callback = function(Value)
-        Config.aggressiveMode = Value
+        Config.autoAdjust = Value
     end
 })
 
--- Main Loop
-RunService.RenderStepped:Connect(function(deltaTime)
-    if not Config.rollEnabled or isRolling then return end
-    
-    local currentTime = tick()
-    if Config.aggressiveMode then
-        -- Attempt roll as fast as possible
-        performRoll()
-    else
-        -- Respect configured delay
-        if currentTime - lastRollTime >= Config.rollDelay then
-            if performRoll() then
-                lastRollTime = currentTime
-            end
-        end
-    end
-end)
+RollTab:CreateLabel("Detected Cooldown: " .. string.format("%.2f", detectedCooldown) .. "s")
