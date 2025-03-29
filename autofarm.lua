@@ -8,118 +8,83 @@ local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-I
 
 -- Configuration
 local Config = {
-    potionCollectEnabled = false,
-    checkInterval = 1, -- Check every 1 second
+    autoPotionEnabled = false, -- Toggle for auto-potion collection
+    collectionRange = 5, -- Distance in studs to auto-collect potions
 }
 
 -- Variables
 local LocalPlayer = Players.LocalPlayer
-local lastCheck = 0
-local qVL = ReplicatedStorage:WaitForChild("qVL", 9e9)
-local pickupEvent = qVL:WaitForChild("4cd3907d-3b30-493c-a19a-f04036e97fe7", 9e9)
-local potionIdsToCollect = {} -- Table to store potion IDs that need to be collected
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local rootPart = character:WaitForChild("HumanoidRootPart")
 
 -- Create Window
 local Window = Rayfield:CreateWindow({
-    Name = "Potion Collector",
+    Name = "Utility",
     LoadingTitle = "Loading...",
     LoadingSubtitle = "",
     ConfigurationSaving = {
         Enabled = true,
-        FolderName = "PotionConfig",
+        FolderName = "UtilityConfig",
         FileName = "Config"
     },
     KeySystem = false
 })
 
 -- Create Main Tab
-local MainTab = Window:CreateTab("Potion Settings")
+local MainTab = Window:CreateTab("Auto Potion")
 
--- Function to Collect Potion
-local function collectPotion(potionId)
-    local args = {
-        [1] = potionId
-    }
+-- Utility Functions
+local function collectPotion(potion)
+    -- Since this is in-game, we may not have server-side control
+    -- Try to destroy the potion directly (client-side)
     pcall(function()
-        pickupEvent:FireServer(unpack(args))
+        potion:Destroy()
+        print(LocalPlayer.Name .. " collected a " .. potion.Name)
     end)
-end
-
--- Function to Check and Collect Potions
-local function checkAndCollectPotions()
-    if not Config.potionCollectEnabled then return end
-
-    -- Collect all potion IDs that were detected
-    for potionId, _ in pairs(potionIdsToCollect) do
-        collectPotion(potionId)
-    end
-
-    -- Clear the table after collection
-    potionIdsToCollect = {}
-end
-
--- Listen for Potion Spawn Events in qVL
-for _, event in pairs(qVL:GetChildren()) do
-    if event:IsA("RemoteEvent") then
-        event.OnClientEvent:Connect(function(data)
-            -- Extract potion ID from event data
-            local potionId = nil
-            if type(data) == "string" then
-                potionId = data
-            elseif type(data) == "table" and data[1] then
-                potionId = data[1]
-            end
-
-            -- Add valid potion ID to collection list
-            if potionId and type(potionId) == "string" then
-                potionIdsToCollect[potionId] = true
-                -- Removed the "potion" string.match filter to collect all IDs
-                -- If you need specific filtering, add it back here
-            end
-        end)
-    end
 end
 
 -- UI Components
 MainTab:CreateToggle({
-    Name = "Enable Potion Collector",
-    CurrentValue = Config.potionCollectEnabled,
-    Flag = "PotionToggle",
+    Name = "Enable Auto Potion",
+    CurrentValue = Config.autoPotionEnabled,
+    Flag = "AutoPotionToggle",
     Callback = function(Value)
-        Config.potionCollectEnabled = Value
-        if Value then
-            checkAndCollectPotions() -- Collect any pending potions when enabled
-        end
+        Config.autoPotionEnabled = Value
     end
 })
 
 MainTab:CreateSlider({
-    Name = "Check Interval",
-    Range = {1, 60},
+    Name = "Collection Range",
+    Range = {1, 20},
     Increment = 1,
-    Suffix = "seconds",
-    CurrentValue = Config.checkInterval,
-    Flag = "CheckInterval",
+    Suffix = "studs",
+    CurrentValue = Config.collectionRange,
+    Flag = "CollectionRange",
     Callback = function(Value)
-        Config.checkInterval = Value
+        Config.collectionRange = Value
     end
 })
 
--- Main Collection Loop
+-- Main Auto Potion Loop
 RunService.Heartbeat:Connect(function()
-    if not Config.potionCollectEnabled then return end
-    
-    local currentTime = tick()
-    if currentTime - lastCheck >= Config.checkInterval then
-        checkAndCollectPotions() -- Collect potions detected via events
-        lastCheck = currentTime
+    if not Config.autoPotionEnabled then
+        return
+    end
+
+    -- Search for potions in the entire workspace
+    for _, potion in pairs(workspace:GetDescendants()) do
+        if potion:IsA("Model") and potion.Name:lower():find("potion") and potion:FindFirstChild("PrimaryPart") then
+            local primaryPart = potion.PrimaryPart
+            local distance = (rootPart.Position - primaryPart.Position).Magnitude
+            if distance <= Config.collectionRange then
+                collectPotion(potion)
+            end
+        end
     end
 end)
 
--- Initial Notification
-Rayfield:Notify({
-    Title = "Potion Collector Loaded",
-    Content = "Potion collection system is ready to use!",
-    Duration = 5,
-    Image = 4483362458
-})
+-- Handle character respawn
+LocalPlayer.CharacterAdded:Connect(function(newCharacter)
+    character = newCharacter
+    rootPart = character:WaitForChild("HumanoidRootPart")
+end)
