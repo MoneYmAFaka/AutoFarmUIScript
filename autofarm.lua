@@ -2,7 +2,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Workspace = game:GetService("Workspace")
-local PhysicsService = game:GetService("PhysicsService")
 
 -- Load Rayfield UI Library
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/UI-Interface/CustomFIeld/main/RayField.lua'))()
@@ -47,90 +46,25 @@ local function findPotionObjects()
         return potions
     end
 
-    -- Look for objects in Folder
+    -- Log all items in Folder
+    print("Items in Workspace.Folder:")
     for _, obj in pairs(folder:GetChildren()) do
-        -- Check if the object has a CollectTrigger part
         local collectTrigger = obj:FindFirstChild("CollectTrigger")
+        local touchInterest = collectTrigger and collectTrigger:FindFirstChild("TouchInterest")
+        local details = {
+            "Name: " .. obj.Name,
+            "Has CollectTrigger: " .. (collectTrigger and "Yes" or "No"),
+            "Has TouchInterest: " .. (touchInterest and "Yes" or "No"),
+            "Position: " .. tostring(obj:GetPrimaryPartCFrame().Position)
+        }
+        print("- " .. table.concat(details, ", "))
+        
         if collectTrigger then
             table.insert(potions, {Object = obj, CollectTrigger = collectTrigger})
         end
     end
     
     return potions
-end
-
-local function findSafeTeleportPosition(collectTrigger)
-    local basePosition = collectTrigger.Position
-    local characterHeight = 5 -- Approximate height of the character
-    local characterWidth = 2 -- Approximate width of the character
-    local maxAttempts = 5 -- Number of attempts to find a safe position
-    local raycastDistance = 50 -- Distance to cast the ray upward to find the surface
-
-    -- Step 1: Cast a ray downward to find the ground
-    local rayOrigin = basePosition + Vector3.new(0, raycastDistance, 0)
-    local rayDirection = Vector3.new(0, -raycastDistance * 2, 0)
-    local raycastParams = RaycastParams.new()
-    raycastParams.FilterDescendantsInstances = {collectTrigger.Parent, Players.LocalPlayer.Character}
-    raycastParams.FilterType = Enum.RaycastFilterType.Blacklist
-    local raycastResult = Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-
-    local safePosition = basePosition
-    if raycastResult then
-        -- Found the ground, adjust the position to be just above it
-        safePosition = raycastResult.Position + Vector3.new(0, characterHeight / 2 + 1, 0)
-    else
-        -- No ground found below, try casting upward to find a ceiling or surface
-        rayOrigin = basePosition - Vector3.new(0, raycastDistance, 0)
-        rayDirection = Vector3.new(0, raycastDistance * 2, 0)
-        raycastResult = Workspace:Raycast(rayOrigin, rayDirection, raycastParams)
-        if raycastResult then
-            safePosition = raycastResult.Position - Vector3.new(0, characterHeight / 2 + 1, 0)
-        end
-    end
-
-    -- Step 2: Check if the position is safe (not inside a wall)
-    local regionSize = Vector3.new(characterWidth, characterHeight, characterWidth)
-    local region = Region3.new(safePosition - regionSize / 2, safePosition + regionSize / 2)
-    local partsInRegion = Workspace:FindPartsInRegion3(region, Players.LocalPlayer.Character, 100)
-    local isSafe = true
-    for _, part in pairs(partsInRegion) do
-        if part ~= collectTrigger and part.CanCollide and not part:IsDescendantOf(collectTrigger.Parent) then
-            isSafe = false
-            break
-        end
-    end
-
-    -- Step 3: If the position isn't safe, try nearby positions
-    if not isSafe then
-        for i = 1, maxAttempts do
-            local offset = Vector3.new(
-                math.random(-5, 5), -- Random offset in X
-                0,
-                math.random(-5, 5) -- Random offset in Z
-            )
-            local testPosition = safePosition + offset
-            region = Region3.new(testPosition - regionSize / 2, testPosition + regionSize / 2)
-            partsInRegion = Workspace:FindPartsInRegion3(region, Players.LocalPlayer.Character, 100)
-            isSafe = true
-            for _, part in pairs(partsInRegion) do
-                if part ~= collectTrigger and part.CanCollide and not part:IsDescendantOf(collectTrigger.Parent) then
-                    isSafe = false
-                    break
-                end
-            end
-            if isSafe then
-                safePosition = testPosition
-                break
-            end
-        end
-    end
-
-    if not isSafe then
-        warn("Could not find a safe teleport position near potion: " .. collectTrigger.Parent.Name)
-        return nil -- Return nil to indicate no safe position was found
-    end
-
-    return safePosition
 end
 
 local function collectPotion(potionData)
@@ -150,13 +84,6 @@ local function collectPotion(potionData)
         return false
     end
 
-    -- Find a safe teleport position
-    local safePosition = findSafeTeleportPosition(collectTrigger)
-    if not safePosition then
-        warn("Skipping potion " .. potion.Name .. " due to unsafe teleport position.")
-        return false
-    end
-
     -- Check if CollectTrigger has a TouchInterest
     local touchInterest = collectTrigger:FindFirstChild("TouchInterest")
     if touchInterest then
@@ -168,20 +95,35 @@ local function collectPotion(potionData)
         -- Temporarily anchor the CollectTrigger to prevent it from moving
         collectTrigger.Anchored = true
 
-        -- Teleport the player to the safe position
-        rootPart.CFrame = CFrame.new(safePosition)
-        task.wait(0.1) -- Small delay to ensure the collision is registered
+        -- Teleport the player directly to the CollectTrigger's position
+        rootPart.CFrame = CFrame.new(collectTrigger.Position)
+        task.wait(0.5) -- Increased delay to ensure the .Touched event fires and the server processes the collection
 
         -- Restore the original Anchored state
         collectTrigger.Anchored = originalAnchored
 
-        print("Teleported to safe position near CollectTrigger in potion: " .. potion.Name)
-        return true
+        -- Check if the potion was collected (i.e., it no longer exists)
+        if not potion.Parent then
+            print("Successfully collected potion: " .. potion.Name)
+            return true
+        else
+            -- Retry once if the potion wasn't collected
+            print("Potion " .. potion.Name .. " was not collected on the first attempt. Retrying...")
+            rootPart.CFrame = CFrame.new(collectTrigger.Position)
+            task.wait(0.5)
+            if not potion.Parent then
+                print("Successfully collected potion after retry: " .. potion.Name)
+                return true
+            else
+                warn("Failed to collect potion after retry: " .. potion.Name)
+                return false
+            end
+        end
     else
         -- Check for ProximityPrompt on CollectTrigger (just in case)
         local prompt = collectTrigger:FindFirstChildOfClass("ProximityPrompt")
         if prompt then
-            rootPart.CFrame = CFrame.new(safePosition)
+            rootPart.CFrame = CFrame.new(collectTrigger.Position + Vector3.new(0, 5, 0))
             task.wait(0.1)
             fireproximityprompt(prompt)
             print("Triggered ProximityPrompt on CollectTrigger in potion: " .. potion.Name)
