@@ -84,27 +84,46 @@ local function collectPotions()
             continue
         end
 
-        -- Check for ProximityPrompt on CollectTrigger
-        local prompt = collectTrigger:FindFirstChildOfClass("ProximityPrompt")
-        if prompt then
-            -- Teleport to the CollectTrigger to trigger the prompt
-            rootPart.CFrame = CFrame.new(collectTrigger.Position + Vector3.new(0, 5, 0))
-            task.wait(0.1)
-            fireproximityprompt(prompt)
-            print("Triggered ProximityPrompt on CollectTrigger in potion: " .. potion.Name)
-        end
+        -- Check if CollectTrigger has a TouchInterest
+        local touchInterest = collectTrigger:FindFirstChild("TouchInterest")
+        if touchInterest then
+            print("Found TouchInterest on CollectTrigger in potion: " .. potion.Name)
 
-        -- Check for ClickDetector on CollectTrigger
-        local clickDetector = collectTrigger:FindFirstChildOfClass("ClickDetector")
-        if clickDetector then
-            fireclickdetector(clickDetector)
-            print("Triggered ClickDetector on CollectTrigger in potion: " .. potion.Name)
-        end
+            -- Store the original Anchored state of CollectTrigger
+            local originalAnchored = collectTrigger.Anchored
 
-        -- If no ProximityPrompt or ClickDetector, attempt collision-based collection
-        if not prompt and not clickDetector then
+            -- Temporarily anchor the CollectTrigger to prevent it from moving
+            collectTrigger.Anchored = true
+
+            -- Teleport the player directly to the CollectTrigger's position to ensure collision
             rootPart.CFrame = CFrame.new(collectTrigger.Position)
-            print("No ProximityPrompt or ClickDetector found on CollectTrigger, attempted collision-based collection for potion: " .. potion.Name)
+            task.wait(0.1) -- Small delay to ensure the collision is registered
+
+            -- Restore the original Anchored state
+            collectTrigger.Anchored = originalAnchored
+
+            print("Attempted to trigger TouchInterest by teleporting to CollectTrigger in potion: " .. potion.Name)
+        else
+            -- Check for ProximityPrompt on CollectTrigger (just in case)
+            local prompt = collectTrigger:FindFirstChildOfClass("ProximityPrompt")
+            if prompt then
+                rootPart.CFrame = CFrame.new(collectTrigger.Position + Vector3.new(0, 5, 0))
+                task.wait(0.1)
+                fireproximityprompt(prompt)
+                print("Triggered ProximityPrompt on CollectTrigger in potion: " .. potion.Name)
+            end
+
+            -- Check for ClickDetector on CollectTrigger (just in case)
+            local clickDetector = collectTrigger:FindFirstChildOfClass("ClickDetector")
+            if clickDetector then
+                fireclickdetector(clickDetector)
+                print("Triggered ClickDetector on CollectTrigger in potion: " .. potion.Name)
+            end
+
+            -- If no TouchInterest, ProximityPrompt, or ClickDetector, log a warning
+            if not touchInterest and not prompt and not clickDetector then
+                warn("No TouchInterest, ProximityPrompt, or ClickDetector found on CollectTrigger in potion: " .. potion.Name)
+            end
         end
 
         task.wait(0.2) -- Delay between each potion to prevent rate limiting
