@@ -40,15 +40,15 @@ local MainTab = Window:CreateTab("Controls")
 -- Functions
 local function findPotionObjects()
     local potions = {}
-    local workspaceFolder = Workspace:FindFirstChild("WorkspaceFolder")
+    local folder = Workspace:FindFirstChild("Folder")
     
-    if not workspaceFolder then
-        warn("WorkspaceFolder not found in Workspace!")
+    if not folder then
+        warn("Folder not found in Workspace!")
         return potions
     end
 
-    -- Look for objects in WorkspaceFolder
-    for _, obj in pairs(workspaceFolder:GetChildren()) do
+    -- Look for objects in Folder
+    for _, obj in pairs(folder:GetChildren()) do
         -- Check if the object has a CollectTrigger part
         local collectTrigger = obj:FindFirstChild("CollectTrigger")
         if collectTrigger then
@@ -73,7 +73,7 @@ local function collectPotions()
         return false -- No potions found, no need to log repeatedly
     end
 
-    print("Found " .. #potionObjects .. " potion objects in WorkspaceFolder. Attempting to collect...")
+    print("Found " .. #potionObjects .. " potion objects in Folder. Attempting to collect...")
 
     for _, potionData in pairs(potionObjects) do
         local potion = potionData.Object
